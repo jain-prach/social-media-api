@@ -2,8 +2,8 @@ import uuid
 from datetime import datetime
 
 from sqlmodel import SQLModel, Field
-from src.setup.config.settings import settings
 
+from .utils import get_default_timezone
 
 class BaseModel(SQLModel, table=False):
     """
@@ -17,6 +17,6 @@ class BaseModel(SQLModel, table=False):
 
     id: uuid.UUID = Field(default=uuid.uuid4(), primary_key=True)
     created_at: datetime = Field(
-        default=datetime.now(tz=settings.TIMEZONE), nullable=False
+        default=datetime.now(tz=get_default_timezone()), nullable=False
     )
     modified_at: datetime = Field(nullable=True)

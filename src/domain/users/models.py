@@ -11,5 +11,5 @@ class BaseUser(BaseModel, table=True):
 
     email: str = Field(unique=True, nullable=False)
     password: str = Field()
-    role: Role = Field(default=Role.USER, sa_column=Column(Enum(Role)), nullable=False)
+    role: Role = Field(default=Role.USER, sa_column=Column(Enum(Role)))
     is_active: bool = Field(default=True, nullable=False)
