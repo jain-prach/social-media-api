@@ -1,18 +1,19 @@
+from typing import TYPE_CHECKING
 import uuid
 from sqlmodel import Field, Relationship, Column, Enum
 
-from ..models import BaseUser
 from lib.fastapi.custom_models import BaseModel
 from lib.fastapi.custom_enums import ProfileType
 
-
+if TYPE_CHECKING:
+    from src.domain.models import BaseUser
 class User(BaseModel, table=True):
     """
     :model: for regular user management (app users without admin rights)
     """
 
-    user_id: uuid.UUID = Field(foreign_key="baseuser.id", ondelete="CASCADE")
-    user: BaseUser = Relationship()
+    base_user_id: uuid.UUID = Field(foreign_key="baseuser.id", ondelete="CASCADE")
+    base_user: "BaseUser" = Relationship(sa_relationship_kwargs={'uselist': False}, back_populates="user")
     username: str = Field(unique=True, nullable=False)
     bio: str = Field(default=None, nullable=True)
     profile: str = Field(default=None, nullable=True)
