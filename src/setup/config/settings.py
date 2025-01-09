@@ -38,8 +38,10 @@ class Config(BaseSettings):
     CELERY_BROKER_URL:str = os.getenv("CELERY_BROKER_URL")
 
     GIT_CLIENT_ID:str = os.getenv("GIT_CLIENT_ID")
-    GIT_REDIRECT_URI:str = f"{BASE_URL}callback/"
+    GIT_REDIRECT_URI:str = f"{BASE_URL}git-callback/"
     GIT_CLIENT_SECRET:str = os.getenv("GIT_CLIENT_SECRET")
+    GIT_TOKEN_URL:str = os.getenv("GIT_TOKEN_URL")
+    GIT_API_URL:str = os.getenv("GIT_API_URL")
 
 
 settings = Config()
