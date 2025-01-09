@@ -42,6 +42,13 @@ class Config(BaseSettings):
     GIT_CLIENT_SECRET:str = os.getenv("GIT_CLIENT_SECRET")
     GIT_TOKEN_URL:str = os.getenv("GIT_TOKEN_URL")
     GIT_API_URL:str = os.getenv("GIT_API_URL")
+    
+    AWS_S3_ENDPOINT_URL:str = os.getenv("AWS_S3_ENDPOINT_URL")
+    AWS_BUCKET_NAME:str = os.getenv("AWS_BUCKET_NAME")
+    AWS_ACCESS_KEY_ID:str = os.getenv("AWS_ACCESS_KEY")
+    AWS_SECRET_KEY_ID:str = os.getenv("AWS_SECRET_KEY")
+    AWS_S3_REGION_NAME:str = os.getenv("AWS_S3_REGION_NAME")
+    PRESIGNED_URL_TIME:dict = ast.literal_eval(os.getenv("PRESIGNED_URL_TIME"))
 
 
 settings = Config()

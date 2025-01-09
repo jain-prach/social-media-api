@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timedelta
 
 from passlib.context import CryptContext
@@ -8,16 +8,17 @@ from sqlmodel import Session, select
 
 
 from src.domain.models import BaseUser, Otp
-from src.interface.auth.schemas import CreateBaseUser, Login
+from src.interface.auth.schemas import Login
+from src.interface.users.schemas import CreateBaseUser, BaseUserSchema
 from src.infrastructure.email_service.services import SendgridService
 from src.infrastructure.auth_service.services import JWTService
 from src.infrastructure.oauth_service.services import GithubOauthService
 from lib.fastapi.custom_exceptions import UnauthorizedException, NotFoundException
-from lib.fastapi.error_string import get_user_not_found, get_incorrect_password, get_invalid_otp, get_expired_otp, git_email_not_found
+from lib.fastapi.error_string import get_user_not_found, get_incorrect_password, get_invalid_otp, get_expired_otp, get_git_email_not_found
 from lib.fastapi.custom_enums import Role
 from src.setup.config.settings import settings
 from .tasks import delete_otp
-from lib.fastapi.utils import get_default_timezone
+from lib.fastapi.utils import get_default_timezone, db_session_value_create
 
 
 class PasswordService:
@@ -61,40 +62,47 @@ class ForgotPasswordService(SendgridService):
         )
 
 
-class UserService:
+class BaseUserService:
     """services for base user model"""
 
     def __init__(self, session: Session):
         self.db_session = session
 
-    def db_session_value_create(self, value:dict):
-        """helper function for repetitive database operation"""
-        self.db_session.add(value)
-        self.db_session.commit()
-        self.db_session.refresh(value)
-
     def get_user_by_email(self, email: str) -> Optional[BaseUser]:
-        """get user from database using email value"""
+        """get base user from database using email value"""
         return self.db_session.scalars(
             select(BaseUser).where(BaseUser.email == email)
         ).first()
     
     def get_user_by_id(self, id:uuid.UUID) -> BaseUser:
-        """get user by id"""
+        """get base user by id"""
         return self.db_session.get(BaseUser, id)
+    
+    def get_all_base_users(self) -> List[BaseUser]:
+        """returns list of all base users"""
+        users = self.db_session.exec(select(BaseUser)).all()
+        return users
 
     def create_user(self, user: CreateBaseUser) -> BaseUser:
-        """create user in the database"""
+        """create base user in the database"""
         user.password = PasswordService().get_hashed_password(user.password)
         # print(user)
         db_user = BaseUser.model_validate(user)
-        self.db_session_value_create(db_user)
+        db_session_value_create(session=self.db_session, value=db_user)
         return db_user
     
     def create_user_without_password(self, email:str) -> BaseUser:
-        """create user without admin rights with only email - use for oauth"""
+        """create base user without admin rights with only email - use for oauth"""
         db_user = BaseUser.model_validate({"email": email, "role": Role.USER})
-        self.db_session_value_create(db_user)
+        db_session_value_create(session=self.db_session, value=db_user)
+        return db_user
+    
+    def update_user(self, id:uuid.UUID, user:BaseUserSchema) -> BaseUser:
+        db_user = self.get_user_by_id(id)
+        if not db_user:
+            raise NotFoundException(detail=get_user_not_found())
+        db_user.sqlmodel_update(user)
+        db_session_value_create(session=self.db_session, value=db_user)
         return db_user
 
     def authenticate_user(self, user: Login) -> Optional[BaseUser]:
@@ -111,12 +119,21 @@ class UserService:
 
     def create_jwt_token_for_user(self, id: str, role: Role) -> str:
         """create jwt token with id in payload"""
-        return JWTService().create_access_token(data={"id": id, "role": role})
+        return JWTService().create_access_token(data={"id": id, "role": role.value})
+    
+    def delete_user(self, id:uuid.UUID) -> None:
+        user = self.get_user_by_id(id=id)
+        if not user:
+            raise NotFoundException(get_user_not_found())
+        self.db_session.delete(user)
+        self.db_session.commit()
+        # user.is_active = False
+        # db_session_value_create(session=self.db_session, value=user)
 
     def create_otp(self, user_id: uuid.UUID) -> Otp:
         """create otp for user"""
         db_otp = Otp.model_validate({"user_id": user_id})
-        self.db_session_value_create(db_otp)
+        db_session_value_create(session=self.db_session, value=db_otp)
         return db_otp
     
     def get_otp_by_user_id(self, user_id: uuid.UUID) -> Optional[Otp]:
@@ -133,14 +150,15 @@ class UserService:
         ).first()
         return otp
 
-    def forgot_password(self, email: str) -> bool:
+    def forgot_password(self, email: str) -> None:
         """send email with otp for password forget"""
         user = self.get_user_by_email(email=email)
-
+    
         #delete otp if already exists and create new
         otp_obj = self.get_otp_by_user_id(user.id)
         if otp_obj:
             self.db_session.delete(otp_obj)
+            self.db_session.commit()
 
         otp = self.create_otp(user_id=user.id)
         # create celery task to delete otp from database after OTP_EXPIRE_TIME
@@ -150,7 +168,7 @@ class UserService:
             + timedelta(**settings.OTP_EXPIRE_TIME),
         )
         ForgotPasswordService().send_otp_email(otp=otp.otp, user=user)
-        return True
+
     
     def verify_otp(self, otp:int, user_id: uuid.UUID) -> str:
         """verify otp sent by the user to allow for password update"""
@@ -167,7 +185,7 @@ class UserService:
         user = self.get_user_by_id(id=user_id)
         user.password = PasswordService().get_hashed_password(new_password)
         # db_user = BaseUser.sqlmodel_update(user)
-        self.db_session_value_create(user)
+        db_session_value_create(user)
         return user
     
     def reset_password(self, otp_token:str, new_password:str) -> Optional[BaseUser]:
@@ -189,4 +207,4 @@ class UserService:
         email = GithubOauthService().get_user_email(access_token)
         if email:
             return email
-        raise NotFoundException(git_email_not_found())
+        raise NotFoundException(get_git_email_not_found())
