@@ -8,7 +8,7 @@ from sqlmodel import Session, select
 
 
 from src.domain.models import BaseUser, Otp
-from src.interface.users.schemas import CreateBaseUser, Login
+from src.interface.auth.schemas import CreateBaseUser, Login
 from src.infrastructure.email_service.services import SendgridService
 from src.infrastructure.auth_service.services import JWTService
 from src.infrastructure.oauth_service.services import GithubOauthService
@@ -111,7 +111,7 @@ class UserService:
 
     def create_jwt_token_for_user(self, id: str, role: Role) -> str:
         """create jwt token with id in payload"""
-        return JWTService().create_access_token(data={"id": id, "role": str(role)})
+        return JWTService().create_access_token(data={"id": id, "role": role})
 
     def create_otp(self, user_id: uuid.UUID) -> Otp:
         """create otp for user"""

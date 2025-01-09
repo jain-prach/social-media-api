@@ -7,6 +7,8 @@ from starlette.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_500_INTERNAL_SERVER_ERROR,
     HTTP_403_FORBIDDEN,
+    HTTP_422_UNPROCESSABLE_ENTITY,
+    HTTP_409_CONFLICT
 )
 
 
@@ -54,4 +56,16 @@ class ForbiddenException(CustomException):
     """raise forbidden exception"""
     def __init__(self, detail: Optional[str] = None) -> None:
         status_code = HTTP_403_FORBIDDEN
+        super().__init__(status_code, detail)
+
+class CustomValidationError(CustomException):
+    """raise custom validation errors"""
+    def __init__(self, detail: str = None) -> None:
+        status_code = HTTP_422_UNPROCESSABLE_ENTITY
+        super().__init__(status_code, detail)
+
+class CustomUniqueConstraintError(CustomException):
+    """raise custom unique constraint errors"""
+    def __init__(self, detail: str = None) -> None:
+        status_code = HTTP_409_CONFLICT
         super().__init__(status_code, detail)
