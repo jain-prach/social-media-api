@@ -1,3 +1,5 @@
+from typing import List
+
 def get_user_not_found() -> str:
     return "User doesn't exist!"
 
@@ -13,5 +15,14 @@ def get_invalid_otp() -> str:
 def get_expired_otp() -> str:
     return "Otp expired! Generate new otp!"
 
-def git_email_not_found() -> str:
+def get_git_email_not_found() -> str:
     return "User email not found in git account"
+
+def get_incorrect_id() -> str:
+    return "Please provide a correct id value."
+
+def get_no_permission() -> str:
+    return "You don't have permission!"
+
+def get_invalid_file_type(valid_types:List[str]):
+    return f"Invalid File Type. Accepted valid types: {valid_types}"

@@ -8,6 +8,8 @@ from .custom_exceptions import (
     NotFoundException,
     ForbiddenException,
     BadRequestException,
+    CustomValidationError,
+    CustomUniqueConstraintError,
 )
 
 
@@ -21,27 +23,15 @@ class HandleExceptionMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
             return response
-        except UnauthorizedException as e:
-            return JSONResponse(
-                status_code=e.status_code,
-                content={"message": e.detail, "success": False, "data": {}},
-            )
-        except NotFoundException as e:
-            return JSONResponse(
-                status_code=e.status_code,
-                content={"message": e.detail, "success": False, "data": {}},
-            )
-        except ForbiddenException as e:
-            return JSONResponse(
-                status_code=e.status_code,
-                content={"message": e.detail, "success": False, "data": {}},
-            )
-        except BadRequestException as e:
-            return JSONResponse(
-                status_code=e.status_code,
-                content={"message": e.detail, "success": False, "data": {}},
-            )
-        except CustomException as e:
+        except (
+            UnauthorizedException,
+            NotFoundException,
+            ForbiddenException,
+            BadRequestException,
+            CustomValidationError,
+            CustomUniqueConstraintError,
+            CustomException,
+        ) as e:
             return JSONResponse(
                 status_code=e.status_code,
                 content={"message": e.detail, "success": False, "data": {}},
