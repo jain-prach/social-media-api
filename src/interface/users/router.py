@@ -1,133 +1,91 @@
-from fastapi import APIRouter
-from starlette.status import HTTP_201_CREATED, HTTP_200_OK
+from typing import Annotated
 
-from .schemas import (
-    CreateBaseUser,
-    BaseUserResponseData,
-    Login,
-    LoginResponseData,
-    ForgotPassword,
-    ForgotPasswordResponseData,
-    VerifyOtp,
-    VerifyOtpResponseData,
-    ResetPassword,
-    ResetPasswordResponseData,
-    GitAuthenticateResponseData,
-)
+from fastapi import APIRouter, Depends
+from starlette.status import HTTP_200_OK
+
+from .schemas import GetBaseUser, BaseUserSchema, BaseUserResponseData, BaseUserListResponseData, DeleteBaseUserResponseData
+from ..auth.dependencies import AuthDep
 from src.setup.config.database import SessionDep
-from src.application.users.services import UserService
-from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
-from .dependencies import AuthDep
+from src.application.users.services import BaseUserService
+from lib.fastapi.custom_enums import Role
+from lib.fastapi.custom_exceptions import NotFoundException, ForbiddenException
+from lib.fastapi.error_string import get_user_not_found, get_no_permission
+from lib.fastapi.utils import check_id
 
-router = APIRouter(tags=["auth"], route_class=UniqueConstraintErrorRoute)
 
+router = APIRouter(tags=["base-user"])
 
-@router.post(
-    "/register/", status_code=HTTP_201_CREATED, response_model=BaseUserResponseData
+@router.get("/users/", status_code=HTTP_200_OK, response_model=BaseUserListResponseData)
+def list_users(current_user:AuthDep, session:SessionDep):
+    """list all base users"""
+    base_user_service = BaseUserService(session)
+    if current_user.get("role") != Role.ADMIN.value:
+        users = [base_user_service.get_user_by_id(id=current_user.get("id"))]
+    users = base_user_service.get_all_base_users()
+    return {"data": users}
+
+@router.get(
+    "/user/{id}/",
+    status_code=HTTP_200_OK,
+    response_model=BaseUserResponseData,
 )
-def register(user: CreateBaseUser, session: SessionDep):
-    """create base user for site access"""
-    db_user = UserService(session).create_user(user)
+def get_user(
+    current_user: AuthDep,
+    data: Annotated[GetBaseUser, Depends(GetBaseUser)],
+    session: SessionDep,
+):
+    """access base user details by id"""
+    # ASK: accepts gibberish data when current_user has role user and returns current_user details
+    base_user_service = BaseUserService(session)
+
+    if current_user.get("role") == Role.ADMIN.value:
+        data.id = check_id(id=data.id)
+        user = base_user_service.get_user_by_id(id=data.id)
+    elif current_user.get("role") == Role.USER.value:
+        user = base_user_service.get_user_by_id(id=current_user.get("id"))
+    else:
+        user = None
+
+    if not user:
+        raise NotFoundException(get_user_not_found())
+
     return {
-        "message": "New user created",
+        "message": "User Information View",
+        "success": True,
+        "data": dict(**user.model_dump()),
+    }
+
+@router.put("/user/{id}/", status_code=HTTP_200_OK, response_model=BaseUserResponseData)
+async def update_user(
+    current_user: AuthDep,
+    id: str, 
+    user: BaseUserSchema,
+    session: SessionDep
+):
+    """update existing user"""
+    id = check_id(id=id)
+    base_user_service = BaseUserService(session)
+
+    if current_user.get("role") == Role.USER.value:
+        if id != current_user.get("id"):
+            raise ForbiddenException(get_no_permission())  
+        
+    db_user = base_user_service.update_user(id=id, user=user)
+
+    return {
+        "message": "New user updated",
         "success": True,
         "data": dict(**db_user.model_dump()),
     }
 
-
-@router.post("/login/", status_code=HTTP_200_OK, response_model=LoginResponseData)
-def login(user: Login, session: SessionDep):
-    """login using base user credentials, use response access_token to login from HTTPBearer"""
-    user_service = UserService(session)
-    db_user = user_service.authenticate_user(user)
-    access_token = user_service.create_jwt_token_for_user(
-        id=str(db_user.id), role=db_user.role
-    )
-    return {
-        "data": dict(
-            id=db_user.id,
-            email=db_user.email,
-            access_token=access_token,
-            token_type="bearer",
-        )
-    }
-
-
-@router.post(
-    "/forgot-password",
-    status_code=HTTP_200_OK,
-    response_model=ForgotPasswordResponseData,
-)
-def forgot_password(user_email: ForgotPassword, session: SessionDep):
-    """forgot password for existing base user email"""
-    user_service = UserService(session)
-    user_service.forgot_password(email=user_email.email)
-    return ForgotPasswordResponseData()
-
-
-@router.post(
-    "/verify-otp", status_code=HTTP_200_OK, response_model=VerifyOtpResponseData
-)
-def verify_otp(data: VerifyOtp, session: SessionDep):
-    """verify otp and return otp token if verified"""
-    user_service = UserService(session)
-    otp_token = user_service.verify_otp(otp=data.otp, user_id=data.user_id)
-    return {"data": dict(otp_token=otp_token)}
-
-
-@router.post(
-    "/reset-password", status_code=HTTP_200_OK, response_model=ResetPasswordResponseData
-)
-def reset_password(data: ResetPassword, session: SessionDep):
-    """reset password for user"""
-    user_service = UserService(session)
-    user = user_service.reset_password(
-        otp_token=data.otp_token, new_password=data.new_password
-    )
-    return ResetPasswordResponseData()
-
-
-@router.get(
-    "/git-authenticate/",
-    status_code=HTTP_200_OK,
-    response_model=GitAuthenticateResponseData
-)
-def git_authenticate():
-    """get github authentication url"""
-    auth_url = UserService.get_git_auth_url()
-    return {"data": dict(url=auth_url)}
-
-
-@router.get(
-    "/git-callback/",
-    status_code=HTTP_200_OK,
-    response_model=LoginResponseData
-)
-def git_callback(code: str, session:SessionDep):
-    """git callback to handle github login for the user"""
-    user_service = UserService(session)
-    user_email = user_service.get_git_user_email(code=code)
-
-    # create user if doesn't exist
-    user = user_service.get_user_by_email(email=user_email)
-    if not user:
-        user = user_service.create_user_without_password(email=user_email)
-
-    # login and get access_token
-    access_token = user_service.create_jwt_token_for_user(
-        id=str(user.id), role=user.role
-    )
-    # provide user with access_token
-    return {
-        "data": dict(
-            id=user.id,
-            email=user.email,
-            access_token=access_token,
-            token_type="bearer",
-        )
-    }
-
-
-# @router.get("/user/")
-# def test_login_access(user:AuthDep):
-#     return f"Hello {user}!"
+@router.delete("/user/{id}/", status_code=HTTP_200_OK, response_model=DeleteBaseUserResponseData)
+async def delete_user(current_user: AuthDep, id: str, session: SessionDep):
+    """delete existing user"""
+    id = check_id(id=id)
+    base_user_service = BaseUserService(session)
+    
+    if current_user.get("role") == Role.USER.value:
+        raise ForbiddenException(get_no_permission())
+    
+    base_user_service.delete_user(id=id)
+    return DeleteBaseUserResponseData()
