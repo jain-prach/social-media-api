@@ -12,3 +12,6 @@ def get_invalid_otp() -> str:
 
 def get_expired_otp() -> str:
     return "Otp expired! Generate new otp!"
+
+def git_email_not_found() -> str:
+    return "User email not found in git account"

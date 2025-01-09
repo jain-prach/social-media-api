@@ -2,8 +2,7 @@ import uuid
 import re
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, field_validator
-
+from pydantic import BaseModel, EmailStr, field_validator, HttpUrl
 from lib.fastapi.custom_enums import Role
 from lib.fastapi.custom_schemas import BaseResponseSchema
 from src.setup.config.settings import settings
@@ -74,36 +73,42 @@ class ForgotPassword(BaseModel):
 
     email: EmailStr
 
+
 class ForgotPasswordResponseData(BaseResponseSchema):
     """password response data with data attribute set to constant string value"""
 
     data: Optional[str] = "Otp will be sent if the user exists!"
 
+
 class VerifyOtp(BaseModel):
     """verify otp schema, also verifies whether otp is of 4 digits"""
 
-    otp:int
+    otp: int
     user_id: uuid.UUID
 
     @field_validator("otp", mode="after")
     @classmethod
-    def valid_otp(cls, otp:int) -> str:
+    def valid_otp(cls, otp: int) -> str:
         if not otp > 1000 and not otp < 9999:
-            raise ValueError(
-                "Otp must be of 4 digit!"
-            )
+            raise ValueError("Otp must be of 4 digit!")
         return otp
-    
+
+
 class VerifyOtpResponse(BaseModel):
     """send otp_token to user"""
-    otp_token:str
+
+    otp_token: str
+
 
 class VerifyOtpResponseData(BaseResponseSchema):
     """verify otp data with data attribute to include VerifyOtpResponse"""
+
     data: VerifyOtpResponse
+
 
 class ResetPassword(BaseModel):
     """reset password schema"""
+
     otp_token: str
     new_password: str
 
@@ -119,8 +124,20 @@ class ResetPassword(BaseModel):
                 "special symbol"
             )
         return new_password
-    
-class ResetPasswordResponseData(BaseModel):
+
+
+class ResetPasswordResponseData(BaseResponseSchema):
     """reset password response data with data attribute set to constant string value"""
 
     data: Optional[str] = "New password set!"
+
+
+class GitAuthenticateResponse(BaseModel):
+    """git authentication url response schema"""
+
+    url: HttpUrl
+
+class GitAuthenticateResponseData(BaseResponseSchema):
+    """git authentication response data with data attribute to include GitAuthenticateResponse"""
+
+    data: GitAuthenticateResponse
