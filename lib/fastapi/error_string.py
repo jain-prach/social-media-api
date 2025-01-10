@@ -30,6 +30,9 @@ def get_invalid_file_type(valid_types:List[str]):
 def get_user_created() -> str:
     return "User already created! Do you want to update?"
 
+def get_admin_created() -> str:
+    return "Admin already created! Do you want to update?"
+
 def get_user_not_created() -> str:
     return "You have not created a user yet!"
 

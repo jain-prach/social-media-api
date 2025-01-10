@@ -1,4 +1,4 @@
-from typing import IO, Optional
+from typing import Optional, List
 import uuid
 
 from sqlmodel import Session
@@ -28,6 +28,10 @@ class UserAppService:
     def get_user_by_base_user_id(self, base_user_id: uuid.UUID) -> Optional[User]:
         """get user by base_user_id"""
         return self.user_service.get_user_by_base_user_id(base_user_id=base_user_id)
+    
+    def get_all_users(self) -> List[User]:
+        """get all users list"""
+        return self.user_service.get_all_users()
 
     def create_user(self, user: UserWithBaseUserId | UserWithProfile) -> User:
         """create user"""
@@ -37,31 +41,25 @@ class UserAppService:
         """update user"""
         return self.user_service.update_user(user=user, db_user=db_user)
     
-    def delete_user(self, id:uuid.UUID) -> None:
-        user = self.get_user_by_id(id=id)
+    def delete_user(self, base_user_id:uuid.UUID) -> None:
+        user = self.get_user_by_base_user_id(id=base_user_id)
         if not user:
             return None
             # raise NotFoundException(get_user_not_found())
         self.user_service.delete_user(user=user)
         return None
 
-    def upload_file_using_boto3(
-        self, object_key: str, file: IO, file_type: str
-    ) -> None:
-        """upload file to minio from file stream"""
-        Boto3Service().upload_file_from_memory(
-            object_key=object_key, file_content=file, file_type=file_type
-        )
 
+    @staticmethod
     def handle_profile_upload(
-        self, profile: UploadFile, user: UserWithBaseUserId
+        profile: UploadFile, user: UserWithBaseUserId
     ) -> str:
         """create object key and handle file upload"""
         get_file_extension = str(profile.filename).split(".")[-1]
         object_key = (
             f"profiles/{user.base_user_id}/{user.base_user_id}.{get_file_extension}"
         )
-        self.upload_file_using_boto3(
-            object_key=object_key, file=profile.file, file_type=profile.content_type
+        Boto3Service().upload_file_from_memory(
+            object_key=object_key, file_content=profile.file, file_type=profile.content_type
         )
         return object_key

@@ -1,4 +1,5 @@
 from typing import Annotated
+import uuid
 
 from fastapi import APIRouter, Depends
 from starlette.status import HTTP_200_OK
@@ -21,7 +22,7 @@ def list_users(current_user:AuthDep, session:SessionDep):
     """list all base users"""
     base_user_app_service = BaseUserAppService(session)
     if current_user.get("role") != Role.ADMIN.value:
-        users = [base_user_app_service.get_base_user_by_id(id=current_user.get("id"))]
+        users = [base_user_app_service.get_base_user_by_id(id=uuid.UUID(current_user.get("id")))]
     else:
         users = base_user_app_service.get_all_base_users()
     return {"data": users}

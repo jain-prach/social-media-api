@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 import uuid
 
 from sqlmodel import Session, select
@@ -29,6 +29,10 @@ class UserService:
         return self.db_session.scalars(
             select(User).where(User.base_user_id == base_user_id)
         ).first()
+
+    def get_all_users(self) -> List[User]:
+        """get all users from the database"""
+        return self.db_session.exec(select(User)).all()
 
     def create_user(self, user: UserWithBaseUserId | UserWithProfile) -> User:
         """create user in the database"""

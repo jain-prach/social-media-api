@@ -1,4 +1,5 @@
 from typing import Annotated, Optional
+import uuid
 
 from fastapi import APIRouter, UploadFile, Depends, File
 from starlette.status import HTTP_201_CREATED, HTTP_200_OK
@@ -7,7 +8,7 @@ from src.setup.config.database import SessionDep
 from src.application.users.users.services import UserAppService
 from src.application.users.services import BaseUserAppService
 from src.interface.auth.dependencies import AuthDep
-from .schemas import UserWithBaseUserId, UserResponseData, GetUser, DeleteUserResponseData
+from .schemas import UserWithBaseUserId, UserResponseData, GetUser, DeleteUserResponseData, UserListResponseData
 from .utils import handle_user_create_with_profile_upload
 from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
 from lib.fastapi.utils import check_id, only_own_access
@@ -28,6 +29,17 @@ router = APIRouter(
     prefix="/user", tags=["users"], route_class=UniqueConstraintErrorRoute
 )
 
+
+
+@router.get("s/", status_code=HTTP_200_OK, response_model=UserListResponseData)
+def list_users(current_user:AuthDep, session:SessionDep):
+    """list all base users"""
+    user_app_service = UserAppService(session)
+    if current_user.get("role") != Role.ADMIN.value:
+        users = [user_app_service.get_user_by_id(id=uuid.UUID(current_user.get("id")))]
+    else:
+        users = user_app_service.get_all_users()
+    return {"data": users}
 
 @router.post(
     "/create/",
@@ -58,7 +70,7 @@ def create_user(
 
     if profile:
         handle_user_create_with_profile_upload(
-            user=user, profile=profile, session=session
+            user=user, profile=profile
         )
 
     db_user = user_app_service.create_user(user)
@@ -104,7 +116,7 @@ def update_user(
 
     if profile:
         user = handle_user_create_with_profile_upload(
-            user=user, profile=profile, session=session
+            user=user, profile=profile
         )
 
     db_user = user_app_service.update_user(user=user, db_user=db_user)
@@ -115,10 +127,10 @@ def update_user(
     }
 
 @router.delete("/{id}/", status_code=HTTP_200_OK, response_model=DeleteUserResponseData)
-def delete_user(current_user: AuthDep, id: str, session: SessionDep):
+def delete_user(current_user: AuthDep, base_user_id: str, session: SessionDep):
     """delete existing user"""
-    id = check_id(id=id)
+    id = check_id(id=base_user_id)
     if current_user.get("role") != Role.ADMIN.value:
         only_own_access(current_user=current_user, id=id)
-    UserAppService(session).delete_user(id=id)
+    UserAppService(session).delete_user(base_user_id=id)
     return DeleteUserResponseData()
