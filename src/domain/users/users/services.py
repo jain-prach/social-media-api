@@ -39,14 +39,16 @@ class UserService:
         db_user = User.model_validate(user)
         db_session_value_create(session=self.db_session, value=db_user)
         return db_user
-    
-    def update_user(self, user:UserWithBaseUserId | UserWithProfile, db_user:User) -> User:
+
+    def update_user(
+        self, user: UserWithBaseUserId | UserWithProfile, db_user: User
+    ) -> User:
         """update user in the database"""
         db_user.sqlmodel_update(user)
         db_session_value_create(session=self.db_session, value=db_user)
         return db_user
-    
-    def delete_user(self, user:User) -> None:
+
+    def delete_user(self, user: User) -> None:
         """delete user in the database"""
         self.db_session.delete(user)
         self.db_session.commit()
