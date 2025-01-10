@@ -11,3 +11,9 @@ class ProfileType(str, Enum):
     """enum for profile type: public and private"""
     PUBLIC = "public"
     PRIVATE = "private"
+
+class StatusType(str, Enum):
+    """enum for status type: pending, approved, rejected"""
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
