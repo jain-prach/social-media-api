@@ -8,7 +8,8 @@ from src.application.users.services import JWTService
 class CustomHTTPBearer(HTTPBearer):
     """custom http bearer to return user role when authenticated"""
     def __init__(self):
-        super().__init__(auto_error=True)
+        ##CHECK 
+        super().__init__()
 
     async def __call__(self, request: Request) -> dict:
         token = await super().__call__(request)
