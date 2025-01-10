@@ -4,13 +4,13 @@ from datetime import datetime, timedelta
 
 from passlib.context import CryptContext
 
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 
 from src.domain.models import BaseUser, Otp
 from src.domain.users.services import BaseUserService, OtpService
 from src.interface.auth.schemas import Login
-from src.interface.users.schemas import CreateBaseUser, BaseUserSchema
+from src.interface.users.schemas import CreateBaseUser, UpdateBaseUser
 from src.infrastructure.email_service.services import SendgridService
 from src.infrastructure.auth_service.services import JWTService
 from src.infrastructure.oauth_service.services import GithubOauthService
@@ -89,11 +89,11 @@ class BaseUserAppService:
     
     def create_base_user_without_password(self, email:str) -> BaseUser:
         """create base user without admin rights with only email - use for oauth"""
-        return self.base_user_service.create_base_user_without_password(email=email)
+        return self.base_user_service.create_base_user(user={"email": email, "role": Role.USER})
     
-    def update_base_user(self, id:uuid.UUID, user:BaseUserSchema) -> BaseUser:
+    def update_base_user(self, user: UpdateBaseUser) -> BaseUser:
         """update base user email and role"""
-        db_user = self.get_base_user_by_id(id)
+        db_user = self.get_base_user_by_id(user.id)
         if not db_user:
             raise NotFoundException(detail=get_user_not_found())
         return self.base_user_service.update_base_user(user=user, db_user=db_user)
@@ -121,6 +121,7 @@ class BaseUserAppService:
             return None
             # raise NotFoundException(get_user_not_found())
         self.base_user_service.delete_base_user(user=user)
+        return None
 
     def create_otp(self, user_id: uuid.UUID) -> Otp:
         """create otp for user"""
@@ -176,7 +177,7 @@ class BaseUserAppService:
         user.password = PasswordService().get_hashed_password(new_password)
         # db_user = BaseUser.sqlmodel_update(user)
         ###CHECK
-        return db_session_value_create(user)
+        return db_session_value_create(session=self.db_session, value=user)
         
     
     def reset_password(self, otp_token:str, new_password:str) -> BaseUser:

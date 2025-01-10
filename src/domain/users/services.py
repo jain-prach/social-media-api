@@ -3,8 +3,7 @@ import uuid
 
 from sqlmodel import Session, select
 
-from src.interface.users.schemas import CreateBaseUser, BaseUserSchema
-from lib.fastapi.custom_enums import Role
+from src.interface.users.schemas import CreateBaseUser, BaseUserSchema, UpdateBaseUser
 from lib.fastapi.utils import db_session_value_create
 from .models import BaseUser, Otp
 
@@ -29,26 +28,14 @@ class BaseUserService:
         users = self.db_session.exec(select(BaseUser)).all()
         return users
     
-    def create_base_user(self, user: CreateBaseUser) -> BaseUser:
+    def create_base_user(self, user: CreateBaseUser | BaseUserSchema) -> BaseUser:
         """create base user in the database"""
         db_user = BaseUser.model_validate(user)
         db_session_value_create(session=self.db_session, value=db_user)
         return db_user
     
-    def create_base_user_without_password(self, email:str) -> BaseUser:
-        """create base user without admin rights with only email - use for oauth"""
-        db_user = BaseUser.model_validate({"email": email, "role": Role.USER})
-        db_session_value_create(session=self.db_session, value=db_user)
-        return db_user
-    
-    def create_admin_base_user_without_password(self, email:str) -> BaseUser:
-        """create base user with admin rights with only email - use for oauth"""
-        db_user = BaseUser.model_validate({"email": email, "role": Role.ADMIN})
-        db_session_value_create(session=self.db_session, value=db_user)
-        return db_user
-    
-    def update_base_user(self, user:BaseUserSchema, db_user:BaseUser) -> BaseUser:
-        """update base user email and role in the database"""
+    def update_base_user(self, user:UpdateBaseUser, db_user:BaseUser) -> BaseUser:
+        """update base user (only role) in the database"""
         db_user.sqlmodel_update(user)
         db_session_value_create(session=self.db_session, value=db_user)
         return db_user
@@ -63,12 +50,6 @@ class OtpService:
     """otp service class to handle Otp database operations"""
     def __init__(self, session:Session):
         self.db_session = session
-    
-    def create_otp(self, user_id: uuid.UUID) -> Otp:
-        """create otp for user"""
-        db_otp = Otp.model_validate({"user_id": user_id})
-        db_session_value_create(session=self.db_session, value=db_otp)
-        return db_otp
 
     def get_otp_by_base_user_id(self, user_id: uuid.UUID) -> Optional[Otp]:
         return self.db_session.scalars(
@@ -79,6 +60,12 @@ class OtpService:
         return self.db_session.scalars(
             select(Otp).where(Otp.otp_token == otp_token)
         ).first()
+    
+    def create_otp(self, user_id: uuid.UUID) -> Otp:
+        """create otp for user"""
+        db_otp = Otp.model_validate({"user_id": user_id})
+        db_session_value_create(session=self.db_session, value=db_otp)
+        return db_otp
     
     def delete_otp(self, otp:Otp) -> None:
         self.db_session.delete(otp)

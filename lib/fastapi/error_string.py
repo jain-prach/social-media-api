@@ -26,3 +26,15 @@ def get_no_permission() -> str:
 
 def get_invalid_file_type(valid_types:List[str]):
     return f"Invalid File Type. Accepted valid types: {valid_types}"
+
+def get_user_created() -> str:
+    return "User already created! Do you want to update?"
+
+def get_user_not_created() -> str:
+    return "You have not created a user yet!"
+
+def get_admin_not_created() -> str:
+    return "You have not created an admin yet!"
+
+def get_admin_to_not_create_user() -> str:
+    return "Admin user can't create a user"

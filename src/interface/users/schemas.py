@@ -56,9 +56,17 @@ class BaseUserListResponseData(BaseResponseSchema):
 class GetBaseUser(BaseModel):
     """information required to get base user"""
 
-    id: str
+    id: str | uuid.UUID
+
+
+class UpdateBaseUser(BaseModel):
+    """schema to upload base user"""
+
+    id: str | uuid.UUID
+    role: Role
+
 
 class DeleteBaseUserResponseData(BaseResponseSchema):
     """delete base user response with data attribute set to constant string value"""
 
-    data: Optional[str] = "User Deleted!"
+    data: Optional[str] = "Base User Deleted!"

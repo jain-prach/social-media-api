@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import uuid
 from sqlmodel import Field, Relationship, Column, Enum
 
@@ -16,7 +16,7 @@ class User(BaseModel, table=True):
     base_user: "BaseUser" = Relationship(sa_relationship_kwargs={'uselist': False}, back_populates="user")
     username: str = Field(unique=True, nullable=False)
     bio: str = Field(default=None, nullable=True)
-    profile: str = Field(default=None, nullable=True)
+    profile: Optional[str] = Field(default=None, nullable=True)
     is_verified: bool = Field(default=False, nullable=False)
     profile_type: ProfileType = Field(
         default=ProfileType.PUBLIC, sa_column=Column(Enum(ProfileType))
