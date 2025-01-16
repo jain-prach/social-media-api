@@ -20,8 +20,10 @@ class Config(BaseSettings):
     DB_PASSWORD:str = os.getenv("DB_PASSWORD")
     DB_HOST:str = os.getenv("DB_HOST")
     DB_PORT:str = os.getenv("DB_PORT")
+    TEST_DB_NAME:str = os.getenv("TEST_DB_NAME")
 
     DATABASE_URL: str = f"{DB_ENGINE}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    TEST_DATABASE_URL:str = f"{DB_ENGINE}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{TEST_DB_NAME}"
 
     STRONG_PASSWORD_PATTERN:str = r"^(?=\S*?[A-Z])(?=\S*?[a-z])(?=\S*?[0-9])(?=\S*?[!@#$%^&~`\\\/<>?\-_\+=\|])\S{8,}$"
 

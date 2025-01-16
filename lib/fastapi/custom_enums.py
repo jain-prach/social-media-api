@@ -13,7 +13,8 @@ class ProfileType(str, Enum):
     PRIVATE = "private"
 
 class StatusType(str, Enum):
-    """enum for status type: pending, approved, rejected"""
+    """enum for status type: pending, accepted, rejected"""
     PENDING = "pending"
+    # ACCEPTED = "accepted"
     APPROVED = "approved"
     REJECTED = "rejected"

@@ -41,3 +41,9 @@ def get_admin_not_created() -> str:
 
 def get_admin_to_not_create_user() -> str:
     return "Admin user can't create a user"
+
+def get_admin_not_allowed() -> str:
+    return "Admin user can't perform this action"
+
+def get_send_request_to_yourself() -> str:
+    return "A user cannot follow themselves"
