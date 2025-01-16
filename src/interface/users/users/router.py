@@ -41,7 +41,7 @@ def list_users(current_user: AuthDep, session: SessionDep):
     """list all base users"""
     user_app_service = UserAppService(session)
     if current_user.get("role") != Role.ADMIN.value:
-        users = [user_app_service.get_user_by_id(id=uuid.UUID(current_user.get("id")))]
+        users = [user_app_service.get_user_by_base_user_id(base_user_id=uuid.UUID(current_user.get("id")))]
     else:
         users = user_app_service.get_all_users()
     return {"data": users}

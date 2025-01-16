@@ -16,9 +16,6 @@ class User(BaseModel, table=True):
     """
 
     base_user_id: uuid.UUID = Field(foreign_key="baseuser.id", ondelete="CASCADE")
-    base_user: "BaseUser" = Relationship(
-        sa_relationship_kwargs={"uselist": False}, back_populates="user"
-    )
     username: str = Field(unique=True, nullable=False)
     bio: str = Field(default=None, nullable=True)
     profile: Optional[str] = Field(default=None, nullable=True)
@@ -26,11 +23,21 @@ class User(BaseModel, table=True):
     profile_type: ProfileType = Field(
         default=ProfileType.PUBLIC, sa_column=Column(Enum(ProfileType))
     )
-    followers: List["FollowersModel"] = Relationship(
-        back_populates="followersmodel.followers",
-        sa_relationship_kwargs={"primaryjoin": "user.id == following_id"},
+
+    base_user: "BaseUser" = Relationship(
+        sa_relationship_kwargs={"uselist": False}, back_populates="user"
     )
+    
+    followers: List["FollowersModel"] = Relationship(
+        back_populates="following",
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id == FollowersModel.following_id",
+        },
+    )
+    
     following: List["FollowersModel"] = Relationship(
-        back_populates="followersmodel.following",
-        sa_relationship_kwargs={"primaryjoin": "user.id == follower_id"},
+        back_populates="follower",
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id == FollowersModel.follower_id",
+        },
     )

@@ -16,8 +16,8 @@ class BaseModel(SQLModel, table=False):
         :modified_at: null at the time of model field creation
     """
 
-    id:uuid.UUID = Field(default=uuid.uuid4(), primary_key=True)
+    id:uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at:datetime = Field(
-        default=datetime.now(tz=get_default_timezone()), nullable=False
+        default_factory=lambda: datetime.now(tz=get_default_timezone()), nullable=False
     )
     modified_at: Optional[datetime] = Field(default=None, nullable=True)
