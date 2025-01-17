@@ -85,7 +85,7 @@ def verify_otp(data: VerifyOtp, session: SessionDep):
 def reset_password(data: ResetPassword, session: SessionDep):
     """reset password for user"""
     base_user_app_service = BaseUserAppService(session)
-    user = base_user_app_service.reset_password(
+    base_user_app_service.reset_password(
         otp_token=data.otp_token, new_password=data.new_password
     )
     return ResetPasswordResponseData()

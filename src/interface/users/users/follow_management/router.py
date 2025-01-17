@@ -100,6 +100,8 @@ def send_request(current_user: AuthDep, user: SendRequestSchema, session: Sessio
 )
 def accept_request(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
     """accept request sent from the mentioned user"""
+    if current_user.get("role") == Role.ADMIN.value:
+        raise UnauthorizedException(get_admin_not_allowed())
     FollowerAppService(session=session).accept_follow_request(
         base_user_id=check_id(id=current_user.get("id")), accept_username=user.username
     )
@@ -113,6 +115,8 @@ def accept_request(current_user: AuthDep, user: SendRequestSchema, session: Sess
 )
 def reject_request(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
     """reject request sent from the mentioned user"""
+    if current_user.get("role") == Role.ADMIN.value:
+        raise UnauthorizedException(get_admin_not_allowed())
     FollowerAppService(session=session).reject_follow_request(
         base_user_id=check_id(id=current_user.get("id")), reject_username=user.username
     )
@@ -126,6 +130,7 @@ def reject_request(current_user: AuthDep, user: SendRequestSchema, session: Sess
 )
 def cancel_request(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
     """cancel request sent to the mentioned user"""
+    
     FollowerAppService(session=session).cancel_follow_request(
         base_user_id=check_id(id=current_user.get("id")), cancel_username=user.username
     )

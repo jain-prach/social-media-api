@@ -47,3 +47,6 @@ def get_admin_not_allowed() -> str:
 
 def get_send_request_to_yourself() -> str:
     return "A user cannot follow themselves"
+
+def get_post_not_found() -> str:
+    return "Post not found!"

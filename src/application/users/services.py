@@ -156,7 +156,7 @@ class BaseUserAppService:
         # delete otp if already exists and create new
         otp_obj = self.get_otp_by_base_user_id(user.id)
         if otp_obj:
-            OtpService(session=self.db_session).delete_otp()
+            OtpService(session=self.db_session).delete_otp(otp=otp_obj)
 
         otp = self.create_otp(user_id=user.id)
 
@@ -185,10 +185,12 @@ class BaseUserAppService:
     def set_new_password(self, user_id: uuid.UUID, new_password: str) -> BaseUser:
         """set new password for the given user"""
         user = self.get_base_user_by_id(id=user_id)
+        db_user = user
         user.password = PasswordService().get_hashed_password(new_password)
-        # db_user = BaseUser.sqlmodel_update(user)
+        db_user.sqlmodel_update(user)
         ###CHECK
-        return db_session_value_create(session=self.db_session, value=user)
+        db_session_value_create(session=self.db_session, value=user)
+        return user
 
     def reset_password(self, otp_token: str, new_password: str) -> BaseUser:
         """reset password using otp_token"""
