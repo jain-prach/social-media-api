@@ -49,6 +49,26 @@ class FollowRequestListSentResponseData(BaseResponseSchema):
     data: List[FollowRequestSentResponse]
 
 class FollowRequestAcceptedResponseData(BaseResponseSchema):
-    """Follow Request Accepted Response data with data attribute set to static string"""
+    """Follow Request Accepted Response data with data attribute set to optional static string"""
     
     data: Optional[str] = "Request Accepted!!"
+
+class FollowRequestRejectedResponseData(BaseResponseSchema):
+    """Follow Request Rejected Response data with data attribute set to optional static string"""
+    
+    data: Optional[str] = "Request Rejected!!"
+
+class FollowRequestCancelledResponseData(BaseResponseSchema):
+    """Follow Request Cancelled Response data with data attribute set to optional static string"""
+    
+    data: Optional[str] = "Request Cancelled!!"
+
+class UnfollowUserResponseData(BaseResponseSchema):
+    """Unfollow User Response data with data attribute set to optional static string"""
+
+    data: Optional[str] = "User Unfollowed!!"
+
+class RemoveFollowerResponseData(BaseResponseSchema):
+    """Remove Follower Response data with data attribute set to optional static string"""
+
+    data: Optional[str] = "Follower Removed!!"

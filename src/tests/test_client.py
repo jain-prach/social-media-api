@@ -7,7 +7,7 @@ from sqlmodel import Session, create_engine, SQLModel
 from src.setup.app_factory import app
 from src.setup.config.settings import settings
 from src.setup.config.database import get_session
-from tests.test_dicts import create_admin, create_user
+from src.tests.test_data import create_admin, create_user
 
 TEST_DATABASE_URL = settings.TEST_DATABASE_URL 
 

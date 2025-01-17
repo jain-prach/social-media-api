@@ -7,8 +7,12 @@ from src.domain.models import FollowersModel, User
 from src.domain.users.users.follow_management.services import FollowerService
 from src.application.users.users.services import UserAppService
 from lib.fastapi.custom_exceptions import NotFoundException, CustomValidationError
-from lib.fastapi.error_string import get_user_not_created, get_send_request_to_yourself
-from lib.fastapi.custom_enums import StatusType
+from lib.fastapi.error_string import (
+    get_user_not_created,
+    get_send_request_to_yourself,
+    get_user_not_found,
+)
+from lib.fastapi.custom_enums import StatusType, ProfileType
 
 
 class FollowerAppService:
@@ -36,7 +40,7 @@ class FollowerAppService:
             username=username
         )
         if not user:
-            raise NotFoundException(get_user_not_created())
+            raise NotFoundException(get_user_not_found())
         return user
 
     def get_all_followers(self, base_user_id: uuid.UUID) -> List[FollowersModel]:
@@ -87,6 +91,18 @@ class FollowerAppService:
             if following.status == StatusType.APPROVED
         ]
 
+    def send_request(self, follower: User, user: User) -> FollowersModel:
+        """send request to the user for private account"""
+        return self.follower_service.create_follow_request(
+            follower=follower, user=user, status=StatusType.PENDING
+        )
+
+    def create_follower(self, follower: User, user: User) -> FollowersModel:
+        """create follower of the user for public account"""
+        return self.follower_service.create_follow_request(
+            follower=follower, user=user, status=StatusType.APPROVED
+        )
+
     def create_follow_request(
         self, follower_id: uuid.UUID, username: str
     ) -> FollowersModel:
@@ -95,7 +111,9 @@ class FollowerAppService:
         user = self.get_user_by_username(username=username)
         if user.username == follower.username:
             raise CustomValidationError(get_send_request_to_yourself())
-        return self.follower_service.create_follow_request(follower=follower, user=user)
+        if user.profile_type == ProfileType.PRIVATE:
+            return self.send_request(follower=follower, user=user)
+        return self.create_follower(follower=follower, user=user)
 
     def accept_follow_request(
         self, base_user_id: uuid.UUID, accept_username: str
@@ -106,7 +124,56 @@ class FollowerAppService:
         follow = self.follower_service.get_follow_for_follower_and_following(
             follower_id=follower.id, following_id=user.id
         )
-        if not follow:
+        if not follow or follow.status != StatusType.PENDING:
             return None
-        self.follower_service.accept_follow_request(follow=follow)
-        return follow
+        return self.follower_service.update_status(
+            follow=follow, status=StatusType.APPROVED
+        )
+
+    def reject_follow_request(
+        self, base_user_id: uuid.UUID, reject_username: str
+    ) -> None:
+        """reject follow request"""
+        user = self.get_user_by_base_user_id(base_user_id=base_user_id)
+        rejected_user = self.get_user_by_username(username=reject_username)
+        follow = self.follower_service.get_follow_for_follower_and_following(
+            follower_id=rejected_user.id, following_id=user.id
+        )
+        if not follow or follow.status != StatusType.PENDING:
+            return None
+        return self.follower_service.delete_follow_request(follow=follow)
+
+    def cancel_follow_request(
+        self, base_user_id: uuid.UUID, cancel_username: str
+    ) -> None:
+        """cancel follow request"""
+        user = self.get_user_by_base_user_id(base_user_id=base_user_id)
+        cancel_request_user = self.get_user_by_username(username=cancel_username)
+        follow = self.follower_service.get_follow_for_follower_and_following(
+            follower_id=user.id, following_id=cancel_request_user.id
+        )
+        if not follow or follow.status != StatusType.PENDING:
+            return None
+        return self.follower_service.delete_follow_request(follow=follow)
+
+    def unfollow_user(self, base_user_id: uuid.UUID, unfollow_username: str) -> None:
+        """unfollow user"""
+        user = self.get_user_by_base_user_id(base_user_id=base_user_id)
+        unfollow_user = self.get_user_by_username(username=unfollow_username)
+        follow = self.follower_service.get_follow_for_follower_and_following(
+            follower_id=user.id, following_id=unfollow_user.id
+        )
+        if not follow or follow.status != StatusType.APPROVED:
+            return None
+        return self.follower_service.delete_follow_request(follow=follow)
+
+    def remove_follower(self, base_user_id: uuid.UUID, remove_username: str) -> None:
+        """remove follower"""
+        user = self.get_user_by_base_user_id(base_user_id=base_user_id)
+        remove_follower = self.get_user_by_username(username=remove_username)
+        follow = self.follower_service.get_follow_for_follower_and_following(
+            follower_id=remove_follower.id, following_id=user.id
+        )
+        if not follow or follow.status != StatusType.APPROVED:
+            return None
+        return self.follower_service.delete_follow_request(follow=follow)
