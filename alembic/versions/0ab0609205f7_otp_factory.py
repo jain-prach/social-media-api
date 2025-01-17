@@ -1,8 +1,8 @@
-"""updated statustype enum
+"""otp factory
 
-Revision ID: 3c63ae180b59
-Revises: 30db8f4c3549
-Create Date: 2025-01-16 19:03:20.632728
+Revision ID: 0ab0609205f7
+Revises: e5c48cdc1aaa
+Create Date: 2025-01-17 18:06:58.192935
 
 """
 from typing import Sequence, Union
@@ -14,8 +14,8 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3c63ae180b59'
-down_revision: Union[str, None] = '30db8f4c3549'
+revision: str = '0ab0609205f7'
+down_revision: Union[str, None] = 'e5c48cdc1aaa'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

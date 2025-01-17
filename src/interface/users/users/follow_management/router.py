@@ -14,7 +14,11 @@ from .schemas import (
     FollowRequestSentResponseData,
     FollowRequestListReceivedResponseData,
     FollowRequestListSentResponseData,
-    FollowRequestAcceptedResponseData
+    FollowRequestAcceptedResponseData,
+    FollowRequestRejectedResponseData,
+    FollowRequestCancelledResponseData,
+    UnfollowUserResponseData,
+    RemoveFollowerResponseData
 )
 from src.application.users.users.follow_management.services import FollowerAppService
 
@@ -89,19 +93,68 @@ def send_request(current_user: AuthDep, user: SendRequestSchema, session: Sessio
     return dict(data=follow)
 
 
-@router.post("/accept/", status_code=HTTP_200_OK, response_model=FollowRequestAcceptedResponseData)
-def accept_request(current_user: AuthDep, username: str, session: SessionDep):
+@router.post(
+    "/accept/",
+    status_code=HTTP_200_OK,
+    response_model=FollowRequestAcceptedResponseData,
+)
+def accept_request(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
     """accept request sent from the mentioned user"""
+    if current_user.get("role") == Role.ADMIN.value:
+        raise UnauthorizedException(get_admin_not_allowed())
     FollowerAppService(session=session).accept_follow_request(
-        base_user_id=check_id(id=current_user.get("id")), accept_username=username
+        base_user_id=check_id(id=current_user.get("id")), accept_username=user.username
     )
     return FollowRequestAcceptedResponseData()
 
-@router.post("/reject/", status_code=HTTP_200_OK)
-def reject_request(current_user: AuthDep, session: SessionDep):
+
+@router.post(
+    "/reject/",
+    status_code=HTTP_200_OK,
+    response_model=FollowRequestAcceptedResponseData,
+)
+def reject_request(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
     """reject request sent from the mentioned user"""
+    if current_user.get("role") == Role.ADMIN.value:
+        raise UnauthorizedException(get_admin_not_allowed())
+    FollowerAppService(session=session).reject_follow_request(
+        base_user_id=check_id(id=current_user.get("id")), reject_username=user.username
+    )
+    return FollowRequestRejectedResponseData()
 
 
-@router.post("/cancel/", status_code=HTTP_200_OK)
-def cancel_request(current_user: AuthDep, session: SessionDep):
+@router.post(
+    "/cancel/",
+    status_code=HTTP_200_OK,
+    response_model=FollowRequestCancelledResponseData,
+)
+def cancel_request(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
     """cancel request sent to the mentioned user"""
+    
+    FollowerAppService(session=session).cancel_follow_request(
+        base_user_id=check_id(id=current_user.get("id")), cancel_username=user.username
+    )
+    return FollowRequestCancelledResponseData()
+
+
+@router.post(
+    "/unfollow/", status_code=HTTP_200_OK, response_model=UnfollowUserResponseData
+)
+def unfollow_user(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
+    """unfollow mentioned user by current_user"""
+    FollowerAppService(session=session).unfollow_user(
+        base_user_id=check_id(id=current_user.get("id")),
+        unfollow_username=user.username,
+    )
+    return UnfollowUserResponseData()
+
+@router.post(
+    "/remove_follower/", status_code=HTTP_200_OK, response_model=RemoveFollowerResponseData
+)
+def remove_follower(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
+    """remove follower of current user"""
+    FollowerAppService(session=session).remove_follower(
+        base_user_id=check_id(id=current_user.get("id")),
+        remove_username=user.username,
+    )
+    return RemoveFollowerResponseData()

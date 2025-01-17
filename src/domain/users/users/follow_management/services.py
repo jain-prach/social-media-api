@@ -28,21 +28,26 @@ class FollowerService:
             .where(FollowersModel.following_id == following_id)
         ).first()
 
-    def create_follow_request(self, follower: User, user: User) -> FollowersModel:
+    def create_follow_request(self, follower: User, user: User, status:StatusType) -> FollowersModel:
         """create follow request with status pending"""
         follow = {
             "follower_id": follower.id,
             "following_id": user.id,
-            "status": StatusType.PENDING,
+            "status": status,
         }
         db_follow = FollowersModel.model_validate(follow)
         db_session_value_create(session=self.db_session, value=db_follow)
         return db_follow
 
-    def accept_follow_request(self, follow: FollowersModel) -> FollowersModel:
-        """accept follow request by updating status to approved"""
+    def update_status(self, follow: FollowersModel, status:StatusType) -> FollowersModel:
+        """updating follow request status"""
         db_follow = follow
-        follow.status = StatusType.APPROVED
+        follow.status = status
         db_follow.sqlmodel_update(follow)
         db_session_value_create(session=self.db_session, value=db_follow)
         return db_follow
+    
+    def delete_follow_request(self, follow: FollowersModel) -> None:
+        """deleting follow request for rejected status"""
+        self.db_session.delete(follow)
+        self.db_session.commit()

@@ -94,7 +94,7 @@ def update_user(
     base_user_app_service = BaseUserAppService(session)
 
     if current_user.get("role") == Role.USER.value:
-        if id != current_user.get("id"):
+        if id != check_id(current_user.get("id")):
             raise ForbiddenException(get_no_permission())  
         
     db_user = base_user_app_service.update_base_user(user=user)
