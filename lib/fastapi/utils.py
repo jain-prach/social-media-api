@@ -43,6 +43,8 @@ def db_session_value_create(session: Session, value: dict):
 def get_valid_image_formats_list() -> List[str]:
     return ["image/jpeg", "image/png", "image/heic", "image/jpg"]
 
+def get_valid_post_formats_list() -> List[str]:
+    return ["image/jpeg", "image/png", "image/heic", "image/jpg", "video/mp4", "video/mpeg"]
 
 def only_admin_access(current_user: dict) -> None:
     if current_user.get("role") == Role.USER.value:

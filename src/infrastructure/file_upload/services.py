@@ -87,6 +87,13 @@ class Boto3Service:
             )
         except ClientError as e:
             print(e)
+    
+    def delete_file(self, object_key:str):
+        """delete file using object_key"""
+        try:
+            pass
+        except ClientError as e:
+            print(e)
 
     def get_presigned_url(self, object_key: str) -> None:
         try:

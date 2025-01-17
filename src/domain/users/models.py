@@ -29,4 +29,4 @@ class Otp(BaseModel, table=True):
     """
     otp:int = Field(default=generate_otp())
     user_id: uuid.UUID = Field(foreign_key="baseuser.id", ondelete="CASCADE", unique=True)
-    otp_token:str = Field(default=binascii.hexlify(os.urandom(20)).decode(), nullable=False)
+    otp_token:str = Field(default_factory=binascii.hexlify(os.urandom(20)).decode, nullable=False)

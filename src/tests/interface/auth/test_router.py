@@ -1,7 +1,7 @@
 import pytest
 
 from tests.test_client import client, setup_database
-from tests.test_dicts import created_user_login, created_admin_login, admin_registration
+from src.tests.test_data import created_user_login, created_admin_login, admin_registration
 
 
 @pytest.fixture(scope="function")
