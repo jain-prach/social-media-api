@@ -50,3 +50,6 @@ def get_send_request_to_yourself() -> str:
 
 def get_post_not_found() -> str:
     return "Post not found!"
+
+def get_user_is_private() -> str:
+    return "This is an private user. You must follow to access their contents."

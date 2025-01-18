@@ -8,12 +8,23 @@ from src.interface.auth.dependencies import AuthDep
 
 from lib.fastapi.utils import check_id, check_file_type, get_valid_post_formats_list
 from src.application.posts.services import PostAppService
-from .schemas import CreatePostSchema, PostSchema, PostResponseData, UpdatePostSchema, PostDeleteResponseData
+from .schemas import CreatePostSchema, PostSchema, PostResponseData, UpdatePostSchema, PostDeleteResponseData, PostListResponseData
 from .media.utils import handle_media_file_upload
 from .utils import check_permission_to_post
 
 
 router = APIRouter(prefix="/post", tags=["posts"])
+
+@router.get("s/", status_code=HTTP_200_OK, response_model=PostListResponseData)
+def list_post(current_user:AuthDep, username:str, session:SessionDep):
+    """list all posts by username"""
+    #admin can access
+    #get current user
+    current_user_id = check_id(id=current_user.get("id"))
+    #get posts
+    post_app_service = PostAppService(session=session)
+    posts = post_app_service.get_all_posts_by_username(current_user_id=current_user_id, username=username)
+    return dict(data=posts)
 
 @router.post('/create/', status_code=HTTP_201_CREATED, response_model=PostResponseData)
 def create_post(current_user:AuthDep, post:Annotated[CreatePostSchema, Depends()], media:List[UploadFile], session:SessionDep):

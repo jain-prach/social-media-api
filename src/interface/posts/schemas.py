@@ -41,3 +41,8 @@ class PostDeleteResponseData(BaseResponseSchema):
     """post delete response data with data attribute set to optional static string"""
 
     data: Optional[str] = "Post Deleted!"
+
+class PostListResponseData(BaseResponseSchema):
+    """post list response data with data attribute to include List of PostResponse"""
+
+    data: List[PostResponse]

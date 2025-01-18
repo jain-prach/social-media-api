@@ -2,17 +2,37 @@ from typing import Annotated
 
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security.utils import get_authorization_scheme_param
+from fastapi.exceptions import HTTPException
+from starlette.status import HTTP_401_UNAUTHORIZED
+
 
 from src.application.users.services import JWTService
 
 class CustomHTTPBearer(HTTPBearer):
     """custom http bearer to return user role when authenticated"""
     def __init__(self):
-        ##CHECK 
         super().__init__()
 
     async def __call__(self, request: Request) -> dict:
-        token = await super().__call__(request)
+        authorization = request.headers.get("Authorization")
+        scheme, credentials = get_authorization_scheme_param(authorization)
+        if not (authorization and scheme and credentials):
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+                )
+            else:
+                return None
+        if scheme.lower() != "bearer":
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authentication credentials",
+                )
+            else:
+                return None
+        token = HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
         payload = JWTService().decode(token.credentials)
         return payload
     

@@ -47,6 +47,7 @@ class Boto3Service:
     def upload_file_from_source(
         self, object_key: str, source_file: str, content_type: str
     ) -> None:
+        """upload file from source"""
         try:
             self._create_bucket(self.bucket_name)
             self.__client.upload_file(
@@ -61,6 +62,7 @@ class Boto3Service:
     def upload_file_from_memory(
         self, object_key: str, file_content: IO, file_type: str
     ) -> None:
+        """upload file using IO buffer"""
         try:
             self._create_bucket(self.bucket_name)
             self.__client.put_object(
@@ -73,6 +75,7 @@ class Boto3Service:
             print(e)
 
     def download_file(self, object_key: str, download_path: str) -> None:
+        """download file to source path"""
         try:
             self.__client.download_file(
                 Bucket=self.bucket_name, Key=object_key, Filename=download_path
@@ -81,6 +84,7 @@ class Boto3Service:
             print(e)
 
     def download_file_into_memory(self, object_key: str, buffer):
+        """download file into memory"""
         try:
             self.__client.download_fileobj(
                 Bucket=self.bucket_name, Key=object_key, Fileobj=buffer
@@ -91,11 +95,12 @@ class Boto3Service:
     def delete_file(self, object_key:str):
         """delete file using object_key"""
         try:
-            pass
+            self.__client.delete_object(Bucket=self.bucket_name, Key=object_key)
         except ClientError as e:
             print(e)
 
     def get_presigned_url(self, object_key: str) -> None:
+        """get temporary url"""
         try:
             url = self.__client.generate_presigned_url(
                 ClientMethod="get_object",

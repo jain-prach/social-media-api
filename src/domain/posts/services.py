@@ -16,8 +16,8 @@ class PostService:
         """get post by post id"""
         return self.db_session.get(Post, id)
     
-    def get_all_posts_by_user(self, user_id:uuid.UUID) -> List[Post]:
-        """get all posts posted by the user from database"""
+    def get_all_posts_by_user_id(self, user_id:uuid.UUID) -> List[Post]:
+        """get all posts posted by the user using user id from database"""
         posts = self.db_session.scalars(select(Post).where(Post.posted_by == user_id))
         return posts
     
