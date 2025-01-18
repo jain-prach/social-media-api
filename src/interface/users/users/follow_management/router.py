@@ -18,7 +18,7 @@ from .schemas import (
     FollowRequestRejectedResponseData,
     FollowRequestCancelledResponseData,
     UnfollowUserResponseData,
-    RemoveFollowerResponseData
+    RemoveFollowerResponseData,
 )
 from src.application.users.users.follow_management.services import FollowerAppService
 
@@ -63,19 +63,21 @@ def list_sent_requests(current_user: AuthDep, session: SessionDep):
     status_code=HTTP_200_OK,
     response_model=FollowRequestListReceivedResponseData,
 )
-def list_followers(username: str, session: SessionDep):
+def list_followers(current_user: AuthDep, username: str, session: SessionDep):
     """list all followers of the user"""
-    followers = FollowerAppService(session=session).get_followers(username=username)
+    followers = FollowerAppService(session=session).get_followers(
+        current_user_id=check_id(id=current_user.get("id")), username=username
+    )
     return dict(data=followers)
 
 
 @router.get(
     "ing/", status_code=HTTP_200_OK, response_model=FollowRequestListSentResponseData
 )
-def list_following(username: str, session: SessionDep):
+def list_following(current_user: AuthDep, username: str, session: SessionDep):
     """list all users that the user follows"""
     following_list = FollowerAppService(session=session).get_following(
-        username=username
+        current_user_id=check_id(id=current_user.get("id")), username=username
     )
     return dict(data=following_list)
 
@@ -130,7 +132,7 @@ def reject_request(current_user: AuthDep, user: SendRequestSchema, session: Sess
 )
 def cancel_request(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
     """cancel request sent to the mentioned user"""
-    
+
     FollowerAppService(session=session).cancel_follow_request(
         base_user_id=check_id(id=current_user.get("id")), cancel_username=user.username
     )
@@ -148,10 +150,15 @@ def unfollow_user(current_user: AuthDep, user: SendRequestSchema, session: Sessi
     )
     return UnfollowUserResponseData()
 
+
 @router.post(
-    "/remove_follower/", status_code=HTTP_200_OK, response_model=RemoveFollowerResponseData
+    "/remove_follower/",
+    status_code=HTTP_200_OK,
+    response_model=RemoveFollowerResponseData,
 )
-def remove_follower(current_user: AuthDep, user: SendRequestSchema, session: SessionDep):
+def remove_follower(
+    current_user: AuthDep, user: SendRequestSchema, session: SessionDep
+):
     """remove follower of current user"""
     FollowerAppService(session=session).remove_follower(
         base_user_id=check_id(id=current_user.get("id")),

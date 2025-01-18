@@ -1,19 +1,30 @@
-from typing import List, Annotated
+from typing import List, Annotated, Optional
 
 from fastapi import APIRouter, UploadFile, Depends
 from starlette.status import HTTP_201_CREATED, HTTP_200_OK
+from fastapi_pagination import Page, set_page, paginate, Params
 
 from src.setup.config.database import SessionDep
 from src.interface.auth.dependencies import AuthDep
-
 from lib.fastapi.utils import check_id, check_file_type, get_valid_post_formats_list
+from lib.fastapi.custom_enums import FilterDates
 from src.application.posts.services import PostAppService
-from .schemas import CreatePostSchema, PostSchema, PostResponseData, UpdatePostSchema, PostDeleteResponseData
+from .schemas import CreatePostSchema, PostSchema, PostResponseData, UpdatePostSchema, PostDeleteResponseData, PostListResponseData, PostResponse
 from .media.utils import handle_media_file_upload
 from .utils import check_permission_to_post
-
+from src.setup.config.settings import settings
 
 router = APIRouter(prefix="/post", tags=["posts"])
+
+@router.get("s/", status_code=HTTP_200_OK, response_model=PostListResponseData)
+def list_post(current_user:AuthDep, username:str, session:SessionDep, page:int=1, search:Optional[str]=None, filter_by:Optional[FilterDates]=None):
+    """list all posts by username, admin has permission to access all private and public account posts"""
+    current_user_id = check_id(id=current_user.get("id"))
+    post_app_service = PostAppService(session=session)
+    posts = post_app_service.get_all_posts_by_username(current_user_id=current_user_id, username=username, search=search, filter_by=filter_by)
+    set_page(Page[PostResponse])
+    paginated_response = paginate(sequence=[post for post in posts], params=Params(page=page, size=settings.POST_PAGINATION_SIZE))
+    return dict(data=paginated_response)
 
 @router.post('/create/', status_code=HTTP_201_CREATED, response_model=PostResponseData)
 def create_post(current_user:AuthDep, post:Annotated[CreatePostSchema, Depends()], media:List[UploadFile], session:SessionDep):

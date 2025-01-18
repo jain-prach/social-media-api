@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 
 from lib.fastapi.custom_enums import Role
 from lib.fastapi.custom_schemas import BaseResponseSchema
+from lib.fastapi.error_string import get_password_value_error
 from src.setup.config.settings import settings
 
 
@@ -25,13 +26,7 @@ class CreateBaseUser(BaseUserSchema):
     @classmethod
     def valid_password(cls, password: str) -> str:
         if not re.match(settings.STRONG_PASSWORD_PATTERN, password):
-            raise ValueError(
-                "Max length(8) and Password must contain at least "
-                "one lower character, "
-                "one upper character, "
-                "digit and "
-                "special symbol"
-            )
+            raise ValueError(get_password_value_error())
         return password
 
 
