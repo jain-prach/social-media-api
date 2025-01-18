@@ -8,6 +8,7 @@ class BaseResponseSchema(BaseModel):
     message: Optional[str] = "success"
     success: Optional[bool] = True
 
-class BaseResponseNoDataSchema(BaseResponseSchema):
+class BaseResponseNoDataSchema(BaseModel):
     """base response schema with data value none"""
     data:List = []
+    success: Optional[bool] = True

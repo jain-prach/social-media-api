@@ -31,7 +31,7 @@ def register(user: CreateBaseUser, session: SessionDep):
     return {
         "message": "New user created",
         "success": True,
-        "data": dict(**db_user.model_dump()),
+        "data": db_user,
     }
 
 
@@ -62,7 +62,7 @@ def forgot_password(user_email: ForgotPassword, session: SessionDep):
     """forgot password for existing base user email"""
     base_user_app_service = BaseUserAppService(session)
     base_user_app_service.forgot_password(email=user_email.email)
-    return ForgotPasswordResponseData()
+    return {}
 
 
 @router.post(
@@ -88,7 +88,7 @@ def reset_password(data: ResetPassword, session: SessionDep):
     base_user_app_service.reset_password(
         otp_token=data.otp_token, new_password=data.new_password
     )
-    return ResetPasswordResponseData()
+    return {}
 
 
 @router.get(
@@ -110,17 +110,17 @@ def git_authenticate():
 def git_callback(code: str, session: SessionDep):
     """git callback to handle github login for the user"""
     base_user_app_service = BaseUserAppService(session)
-    user_email = base_user_app_service.get_git_user_email(code=code)
+    email = base_user_app_service.get_git_user_email(code=code)
 
     # create user if doesn't exist
-    user = base_user_app_service.get_base_user_by_email(email=user_email)
+    user = base_user_app_service.get_base_user_by_email(email=email)
     if not user:
-        user = base_user_app_service.create_base_user_without_password(email=user_email)
-
-    # login and get access_token
+        user = base_user_app_service.create_base_user_without_password(email=email)
+    # get access_token
     access_token = base_user_app_service.create_jwt_token_for_user(
         id=str(user.id), role=user.role
     )
+    
     # provide user with access_token
     return {
         "data": dict(

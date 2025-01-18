@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from pydantic_settings import BaseSettings
 from pydantic_extra_types.timezone_name import TimeZoneName 
+from pydantic import EmailStr
 
 load_dotenv("env/.env")
 
@@ -33,6 +34,7 @@ class Config(BaseSettings):
 
     SENDGRID_API_KEY:str = os.getenv("SENDGRID_API_KEY")
     FORGOT_PASSWORD_TEMPLATE:str = os.getenv("FORGOT_PASSWORD_TEMPLATE")
+    SENDGRID_SENDER:EmailStr = os.getenv("SENDGRID_SENDER")
 
     OTP_EXPIRE_TIME:dict = ast.literal_eval(os.getenv("OTP_EXPIRE_TIME"))
 

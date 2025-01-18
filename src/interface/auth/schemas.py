@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, field_validator, HttpUrl
 
-from lib.fastapi.custom_schemas import BaseResponseSchema
+from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
 
 from src.setup.config.settings import settings
 
@@ -37,10 +37,10 @@ class ForgotPassword(BaseModel):
     email: EmailStr
 
 
-class ForgotPasswordResponseData(BaseResponseSchema):
-    """password response data with data attribute set to constant string value"""
+class ForgotPasswordResponseData(BaseResponseNoDataSchema):
+    """password response data with message attribute set to constant string value"""
 
-    data: Optional[str] = "Otp will be sent if the user exists!"
+    message: Optional[str] = "Otp will be sent if the user exists!"
 
 
 class VerifyOtp(BaseModel):
@@ -89,10 +89,10 @@ class ResetPassword(BaseModel):
         return new_password
 
 
-class ResetPasswordResponseData(BaseResponseSchema):
-    """reset password response data with data attribute set to constant string value"""
+class ResetPasswordResponseData(BaseResponseNoDataSchema):
+    """reset password response data with message attribute set to constant string value"""
 
-    data: Optional[str] = "New password set!"
+    message: Optional[str] = "New password set!"
 
 
 class GitAuthenticateResponse(BaseModel):

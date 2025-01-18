@@ -21,11 +21,12 @@ from lib.fastapi.error_string import (
     get_invalid_otp,
     get_expired_otp,
     get_git_email_not_found,
+    get_otp_link_expired
 )
 from lib.fastapi.custom_enums import Role
 from src.setup.config.settings import settings
 from .tasks import delete_otp
-from lib.fastapi.utils import get_default_timezone, db_session_value_create
+from lib.fastapi.utils import get_default_timezone
 
 
 class PasswordService:
@@ -54,7 +55,7 @@ class ForgotPasswordService(SendgridService):
     def send_otp_email(self, otp: int, user: BaseUser):
         """sends otp to the user's email"""
         self._send_template_email(
-            sender="prachi1.citrusbug@gmail.com",
+            sender=settings.SENDGRID_SENDER,
             receivers=[
                 {
                     "email": user.email,
@@ -64,7 +65,6 @@ class ForgotPasswordService(SendgridService):
             template_id=settings.FORGOT_PASSWORD_TEMPLATE,
             template_dict={
                 "otp": str(otp),
-                "user_id": f"{user.id}",
             },
         )
 
@@ -88,30 +88,29 @@ class BaseUserAppService:
         """returns list of all base users"""
         return self.base_user_service.get_all_base_users()
 
-    def create_base_user(self, user: CreateBaseUser) -> BaseUser:
+    def create_base_user(self, base_user: CreateBaseUser) -> BaseUser:
         """create base user after hashing base user's password"""
-        user.password = PasswordService().get_hashed_password(user.password)
-        return self.base_user_service.create_base_user(user)
+        base_user.password = PasswordService().get_hashed_password(base_user.password)
+        return self.base_user_service.create(base_user=base_user)
 
     def create_base_user_without_password(self, email: str) -> BaseUser:
         """create base user without admin rights with only email - use for oauth"""
-        return self.base_user_service.create_base_user(
+        return self.base_user_service.create(
             user={"email": email, "role": Role.USER}
         )
 
-    def update_base_user(self, user: UpdateBaseUser) -> BaseUser:
-        """update base user email and role"""
-        db_user = self.get_base_user_by_id(user.id)
-        if not db_user:
+    def update_base_user(self, base_user: UpdateBaseUser) -> BaseUser:
+        """update base user """
+        db_base_user = self.get_base_user_by_id(base_user.id)
+        if not db_base_user:
             raise NotFoundException(detail=get_user_not_found())
-        return self.base_user_service.update_base_user(user=user, db_user=db_user)
+        return self.base_user_service.update(base_user=base_user, db_base_user=db_base_user)
 
     def authenticate_user(self, user: Login) -> Optional[BaseUser]:
         """authenticate user for email and password"""
-        db_user = self.get_base_user_by_email(user.email)
+        db_user = self.get_base_user_by_email(email=user.email)
         if not db_user:
             raise UnauthorizedException(get_incorrect_password())
-            # raise NotFoundException(get_user_not_found())
         verify = PasswordService().verify_password(
             password=user.password, hashed_password=db_user.password
         )
@@ -120,32 +119,19 @@ class BaseUserAppService:
         return db_user
 
     def create_jwt_token_for_user(self, id: str, role: Role) -> str:
-        """create jwt token with id in payload"""
-        return JWTService().create_access_token(data={"id": id, "role": role.value})
+        """create jwt token with base user id and role in payload"""
+        return JWTService().create_access_token(data={"id": id, "role": role.value}, expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME))
 
     def delete_base_user(self, id: uuid.UUID) -> None:
-        user = self.get_base_user_by_id(id=id)
-        if not user:
+        db_base_user = self.get_base_user_by_id(id=id)
+        if not db_base_user:
             return None
-            # raise NotFoundException(get_user_not_found())
-        self.base_user_service.delete_base_user(user=user)
+        self.base_user_service.delete(db_base_user=db_base_user)
         return None
 
     def create_otp(self, user_id: uuid.UUID) -> Otp:
         """create otp for user"""
-        return OtpService(session=self.db_session).create_otp(user_id=user_id)
-
-    def get_otp_by_base_user_id(self, user_id: uuid.UUID) -> Optional[Otp]:
-        """get otp by user id"""
-        return OtpService(session=self.db_session).get_otp_by_base_user_id(
-            user_id=user_id
-        )
-
-    def get_otp_by_otp_token(self, otp_token: str) -> Optional[Otp]:
-        """get otp by otp_token"""
-        return OtpService(session=self.db_session).get_otp_by_otp_token(
-            otp_token=otp_token
-        )
+        return OtpService(session=self.db_session).create(user_id=user_id)
 
     def forgot_password(self, email: str) -> None:
         """send email with otp for password forget"""
@@ -154,9 +140,9 @@ class BaseUserAppService:
             return None
 
         # delete otp if already exists and create new
-        otp_obj = self.get_otp_by_base_user_id(user.id)
+        otp_obj = user.otp
         if otp_obj:
-            OtpService(session=self.db_session).delete_otp(otp=otp_obj)
+            OtpService(session=self.db_session).delete(otp=otp_obj)
 
         otp = self.create_otp(user_id=user.id)
 
@@ -171,13 +157,18 @@ class BaseUserAppService:
         ForgotPasswordService().send_otp_email(otp=otp.otp, user=user)
 
         return None
-
-    def verify_otp(self, otp: int, user_id: uuid.UUID) -> str:
+        
+    def create_jwt_token_for_otp(self, otp:int, base_user_id:uuid.UUID) -> str:
+        """create jwt token with otp and base_user_id in payload"""
+        return JWTService().create_access_token(data={"id": base_user_id, "otp": otp}, expire=datetime.now() + timedelta(**settings.OTP_EXPIRE_TIME))
+    
+    def verify_otp(self, otp: int, email: str) -> str:
         """verify otp sent by the user to allow for password update"""
-        otp_obj = self.get_otp_by_base_user_id(user_id=user_id)
+        base_user = self.get_base_user_by_email(email=email)
+        otp_obj = base_user.otp
         if otp_obj:
             if otp_obj.otp == otp:
-                return otp_obj.otp_token
+                return self.create_jwt_token_for_otp(otp=otp_obj.otp, base_user_id=base_user.id)
             raise UnauthorizedException(get_invalid_otp())
         else:
             raise NotFoundException(get_expired_otp())
@@ -187,19 +178,18 @@ class BaseUserAppService:
         user = self.get_base_user_by_id(id=user_id)
         db_user = user
         user.password = PasswordService().get_hashed_password(new_password)
-        db_user.sqlmodel_update(user)
-        ###CHECK
-        db_session_value_create(session=self.db_session, value=user)
+        self.base_user_service.update(base_user=user, db_base_user=db_user)
         return user
 
     def reset_password(self, otp_token: str, new_password: str) -> BaseUser:
         """reset password using otp_token"""
-        otp_obj = self.get_otp_by_otp_token(otp_token=otp_token)
-        if otp_obj:
-            return self.set_new_password(
-                user_id=otp_obj.user_id, new_password=new_password
-            )
-        raise NotFoundException(get_expired_otp())
+        payload = JWTService().decode(token=otp_token)
+        if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
+            raise NotFoundException(get_otp_link_expired())
+        base_user_id = payload.get("id")
+        return self.set_new_password(
+            user_id=base_user_id, new_password=new_password
+        )
 
     @staticmethod
     def get_git_auth_url() -> str:
@@ -210,7 +200,7 @@ class BaseUserAppService:
     def get_git_user_email(code: str) -> Optional[str]:
         """return user email as available in user's git account"""
         access_token = GithubOauthService().get_access_token(code=code)
-        email = GithubOauthService().get_user_email(access_token)
+        email = GithubOauthService().get_user_email(access_token=access_token)
         if email:
             return email
         raise NotFoundException(get_git_email_not_found())

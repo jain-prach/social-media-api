@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -29,10 +29,9 @@ class JWTService:
         except InvalidTokenError:
             raise UnauthorizedException(get_invalid_token())
 
-    def create_access_token(self, data:dict) -> str:
+    def create_access_token(self, data:dict, expire:datetime) -> str:
         """create access token with expire time"""
         data_to_encode = data.copy()
-        expire = datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME)
         data_to_encode.update({"exp": expire})
         encoded_jwt = self.encode(data=data_to_encode)
         return encoded_jwt

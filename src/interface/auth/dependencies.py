@@ -1,4 +1,5 @@
 from typing import Annotated
+from datetime import datetime
 
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -6,11 +7,14 @@ from fastapi.security.utils import get_authorization_scheme_param
 from fastapi.exceptions import HTTPException
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-
 from src.application.users.services import JWTService
+from lib.fastapi.custom_exceptions import NotFoundException
+from lib.fastapi.error_string import get_access_token_expired
+
 
 class CustomHTTPBearer(HTTPBearer):
     """custom http bearer to return user role when authenticated"""
+
     def __init__(self):
         super().__init__()
 
@@ -34,7 +38,10 @@ class CustomHTTPBearer(HTTPBearer):
                 return None
         token = HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
         payload = JWTService().decode(token.credentials)
+        if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
+            raise NotFoundException(get_access_token_expired())
         return payload
-    
+
+
 http_bearer = CustomHTTPBearer()
 AuthDep = Annotated[HTTPAuthorizationCredentials, Depends(http_bearer)]
