@@ -18,3 +18,10 @@ class StatusType(str, Enum):
     # ACCEPTED = "accepted"
     APPROVED = "approved"
     REJECTED = "rejected"
+
+class FilterDates(str, Enum):
+    """enum for filtering by dates"""
+    THIS_MONTH = "this month"
+    LAST_SIX_MONTHS = "last 6 months"
+    LAST_ONE_YEAR = "last 1 year"
+    LAST_TEN_YEARS = "last 10 years"

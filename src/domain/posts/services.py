@@ -5,8 +5,8 @@ from sqlmodel import Session, select, desc
 
 from .models import Post
 from src.interface.posts.schemas import PostSchema
-from lib.fastapi.utils import db_session_value_create
-
+from lib.fastapi.utils import db_session_value_create, get_after_date_from_enum
+from lib.fastapi.custom_enums import FilterDates
 
 class PostService:
     """post service for handling post database operations"""
@@ -18,24 +18,20 @@ class PostService:
         """get post by post id"""
         return self.db_session.get(Post, id)
 
-    def get_all_posts_by_user_id(self, user_id: uuid.UUID) -> List[Post]:
-        """get all posts posted by the user using user id from database"""
-        posts = self.db_session.scalars(
-            select(Post)
-            .where(Post.posted_by == user_id)
-            .order_by(desc(Post.created_at))
-        )
-        return posts
-
-    def get_all_posts_by_user_id_filter_by_search_caption(
-        self, user_id: uuid.UUID, search: str
-    ) -> List[Post]:
-        """get all posts posted by the user using user id filtered by search query from database"""
-        posts = self.db_session.scalars(
-            select(Post)
-            .where(Post.posted_by == user_id)
-            .filter(Post.caption.contains(search))
-        )
+    def get_all_posts_by_user_id(self, user_id: uuid.UUID, search: Optional[str], filter_by: Optional[FilterDates]) -> List[Post]:
+        """get all posts posted by the user using user id all or filtered by created at or search query in caption from database"""
+        base = select(Post).where(Post.posted_by == user_id)
+        if search and filter_by:
+            after_date = get_after_date_from_enum(value=filter_by)
+            statement = base.filter(Post.caption.contains(search)).filter(Post.created_at >= after_date)
+        elif search:
+            statement = base.filter(Post.caption.contains(search))
+        elif filter_by:
+            after_date = get_after_date_from_enum(value=filter_by)
+            statement = base.filter(Post.created_at >= (after_date))
+        else:
+            statement = base
+        posts = self.db_session.scalars(statement.order_by(desc(Post.created_at)))
         return posts
 
     # def get_post_by_post_id_for_user(self, post_id:uuid.UUID, user_id:uuid.UUID) -> Optional[Post]:
