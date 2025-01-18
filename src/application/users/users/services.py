@@ -8,6 +8,9 @@ from src.domain.models import User
 from src.domain.users.users.services import UserService
 from src.interface.users.users.schemas import UserWithProfile, UserWithBaseUserId
 from src.infrastructure.file_upload.services import Boto3Service
+from lib.fastapi.custom_enums import ProfileType, Role
+from lib.fastapi.custom_exceptions import ForbiddenException
+from lib.fastapi.error_string import get_user_is_private
 
 
 class UserAppService:
@@ -48,7 +51,14 @@ class UserAppService:
             # raise NotFoundException(get_user_not_found())
         self.user_service.delete_user(user=user)
         return None
-
+    
+    def check_private_user(self, current_user_id:uuid.UUID, user:User) -> None:
+        """check if user is private and whether current user follows the user"""
+        current_user = self.get_user_by_base_user_id(base_user_id=current_user_id)
+        if (user.profile_type == ProfileType.PRIVATE) and current_user.base_user.role != Role.ADMIN:
+            followers_user_id = [follower.follower_id for follower in user.followers]
+            if current_user != user and current_user.id not in followers_user_id:
+                raise ForbiddenException(get_user_is_private())
 
     @staticmethod
     def handle_profile_upload(

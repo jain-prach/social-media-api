@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
 
@@ -7,3 +7,7 @@ class BaseResponseSchema(BaseModel):
 
     message: Optional[str] = "success"
     success: Optional[bool] = True
+
+class BaseResponseNoDataSchema(BaseResponseSchema):
+    """base response schema with data value none"""
+    data:List = []

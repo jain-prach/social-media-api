@@ -73,17 +73,21 @@ class FollowerAppService:
             if following.status == StatusType.PENDING
         ]
 
-    def get_followers(self, username: str) -> List[FollowersModel]:
+    def get_followers(self, current_user_id:uuid.UUID, username: str) -> List[FollowersModel]:
         """get requests accepted by the user"""
         user = self.get_user_by_username(username=username)
+        user_app_service = UserAppService(session=self.db_session)
+        user_app_service.check_private_user(current_user_id=current_user_id, user=user)
         followers = self.get_all_followers(base_user_id=user.base_user_id)
         return [
             follower for follower in followers if follower.status == StatusType.APPROVED
         ]
 
-    def get_following(self, username: str) -> List[FollowersModel]:
+    def get_following(self, current_user_id:uuid.UUID, username: str) -> List[FollowersModel]:
         """get sent requests accepted for the user"""
         user = self.get_user_by_username(username=username)
+        user_app_service = UserAppService(session=self.db_session)
+        user_app_service.check_private_user(current_user_id=current_user_id, user=user)
         following_list = self.get_all_following_list(base_user_id=user.base_user_id)
         return [
             following

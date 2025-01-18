@@ -52,5 +52,7 @@ class Config(BaseSettings):
     AWS_S3_REGION_NAME:str = os.getenv("AWS_S3_REGION_NAME")
     PRESIGNED_URL_TIME:dict = ast.literal_eval(os.getenv("PRESIGNED_URL_TIME"))
 
+    POST_PAGINATION_SIZE:int = int(os.getenv("POST_PAGINATION_SIZE"))
+
 
 settings = Config()

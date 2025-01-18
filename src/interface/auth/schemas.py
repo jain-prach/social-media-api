@@ -5,6 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator, HttpUrl
 
 from lib.fastapi.custom_schemas import BaseResponseSchema
+
 from src.setup.config.settings import settings
 
 
