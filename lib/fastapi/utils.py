@@ -58,7 +58,7 @@ def only_own_access(current_user: dict, id: uuid.UUID) -> None:
 
 
 def check_file_type(content_type: str, valid_types: List) -> None:
-    if content_type not in get_valid_image_formats_list():
+    if content_type not in valid_types:
         raise CustomValidationError(
-            get_invalid_file_type(valid_types=get_valid_image_formats_list())
+            get_invalid_file_type(valid_types=valid_types)
         )

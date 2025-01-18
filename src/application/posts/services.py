@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Optional
 
 from sqlmodel import Session
 
@@ -30,13 +30,15 @@ class PostAppService:
         """get all posts posted by the user"""
         return self.post_service.get_all_posts_by_user_id(user_id=user_id)
     
-    def get_all_posts_by_username(self, current_user_id:uuid.UUID, username:str) -> List[Post]:
+    def get_all_posts_by_username(self, current_user_id:uuid.UUID, username:str, search: Optional[str]) -> List[Post]:
         """get all posts by username"""
         user_app_service = UserAppService(session=self.db_session)
         user = user_app_service.get_user_by_username(username=username)
         if not user:
             raise NotFoundException(get_user_not_found())
         user_app_service.check_private_user(current_user_id=current_user_id, user=user)
+        if search:
+            return self.post_service.get_all_posts_by_user_id_filter_by_search_caption(user_id=user.id, search=search)
         return self.post_service.get_all_posts_by_user_id(user_id=user.id)
 
     def get_post_by_post_id_for_user(

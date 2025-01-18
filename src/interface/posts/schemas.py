@@ -2,6 +2,7 @@ import uuid
 from typing import List, Optional
 
 from pydantic import BaseModel
+from fastapi_pagination import Page
 
 from src.interface.posts.media.schemas import MediaSchema
 from lib.fastapi.custom_schemas import BaseResponseSchema
@@ -45,4 +46,4 @@ class PostDeleteResponseData(BaseResponseSchema):
 class PostListResponseData(BaseResponseSchema):
     """post list response data with data attribute to include List of PostResponse"""
 
-    data: List[PostResponse]
+    data: Page[PostResponse]
