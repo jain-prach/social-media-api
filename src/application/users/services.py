@@ -10,7 +10,10 @@ from sqlmodel import Session
 from src.domain.models import BaseUser, Otp
 from src.domain.users.services import BaseUserService, OtpService
 from src.interface.auth.schemas import Login
-from src.interface.users.schemas import CreateBaseUser, UpdateBaseUser
+from src.interface.users.schemas import (
+    CreateBaseUser,
+    UpdateBaseUser
+)
 from src.infrastructure.email_service.services import SendgridService
 from src.infrastructure.auth_service.services import JWTService
 from src.infrastructure.oauth_service.services import GithubOauthService
@@ -21,12 +24,14 @@ from lib.fastapi.error_string import (
     get_invalid_otp,
     get_expired_otp,
     get_git_email_not_found,
-    get_otp_link_expired
+    get_otp_link_expired,
 )
 from lib.fastapi.custom_enums import Role
 from src.setup.config.settings import settings
 from .tasks import delete_otp
 from lib.fastapi.utils import get_default_timezone
+from src.application.users.users.services import UserAppService
+from src.application.users.admins.services import AdminAppService
 
 
 class PasswordService:
@@ -91,20 +96,27 @@ class BaseUserAppService:
     def create_base_user(self, base_user: CreateBaseUser) -> BaseUser:
         """create base user after hashing base user's password"""
         base_user.password = PasswordService().get_hashed_password(base_user.password)
-        return self.base_user_service.create(base_user=base_user)
+        db_base_user = self.base_user_service.create(base_user=base_user)
+        if db_base_user.role == Role.ADMIN:
+            admin_app_service = AdminAppService(session=self.db_session)
+            db_base_user.admin = admin_app_service.create_admin_directly(base_user_id=db_base_user.id)
+        else:
+            user_app_service = UserAppService(session=self.db_session)
+            db_base_user.user = user_app_service.create_dummy_user(base_user_id=db_base_user.id)
+        return self.update_base_user(base_user=db_base_user)
 
     def create_base_user_without_password(self, email: str) -> BaseUser:
         """create base user without admin rights with only email - use for oauth"""
-        return self.base_user_service.create(
-            user={"email": email, "role": Role.USER}
-        )
+        return self.base_user_service.create(user={"email": email, "role": Role.USER})
 
     def update_base_user(self, base_user: UpdateBaseUser) -> BaseUser:
-        """update base user """
+        """update base user"""
         db_base_user = self.get_base_user_by_id(base_user.id)
         if not db_base_user:
             raise NotFoundException(detail=get_user_not_found())
-        return self.base_user_service.update(base_user=base_user, db_base_user=db_base_user)
+        return self.base_user_service.update(
+            base_user=base_user, db_base_user=db_base_user
+        )
 
     def authenticate_user(self, user: Login) -> Optional[BaseUser]:
         """authenticate user for email and password"""
@@ -120,7 +132,10 @@ class BaseUserAppService:
 
     def create_jwt_token_for_user(self, id: str, role: Role) -> str:
         """create jwt token with base user id and role in payload"""
-        return JWTService().create_access_token(data={"id": id, "role": role.value}, expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME))
+        return JWTService().create_access_token(
+            data={"id": id, "role": role.value},
+            expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
+        )
 
     def delete_base_user(self, id: uuid.UUID) -> None:
         db_base_user = self.get_base_user_by_id(id=id)
@@ -157,18 +172,23 @@ class BaseUserAppService:
         ForgotPasswordService().send_otp_email(otp=otp.otp, user=user)
 
         return None
-        
-    def create_jwt_token_for_otp(self, otp:int, base_user_id:uuid.UUID) -> str:
+
+    def create_jwt_token_for_otp(self, otp: int, base_user_id: uuid.UUID) -> str:
         """create jwt token with otp and base_user_id in payload"""
-        return JWTService().create_access_token(data={"id": base_user_id, "otp": otp}, expire=datetime.now() + timedelta(**settings.OTP_EXPIRE_TIME))
-    
+        return JWTService().create_access_token(
+            data={"id": base_user_id, "otp": otp},
+            expire=datetime.now() + timedelta(**settings.OTP_EXPIRE_TIME),
+        )
+
     def verify_otp(self, otp: int, email: str) -> str:
         """verify otp sent by the user to allow for password update"""
         base_user = self.get_base_user_by_email(email=email)
         otp_obj = base_user.otp
         if otp_obj:
             if otp_obj.otp == otp:
-                return self.create_jwt_token_for_otp(otp=otp_obj.otp, base_user_id=base_user.id)
+                return self.create_jwt_token_for_otp(
+                    otp=otp_obj.otp, base_user_id=base_user.id
+                )
             raise UnauthorizedException(get_invalid_otp())
         else:
             raise NotFoundException(get_expired_otp())
@@ -187,9 +207,7 @@ class BaseUserAppService:
         if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
             raise NotFoundException(get_otp_link_expired())
         base_user_id = payload.get("id")
-        return self.set_new_password(
-            user_id=base_user_id, new_password=new_password
-        )
+        return self.set_new_password(user_id=base_user_id, new_password=new_password)
 
     @staticmethod
     def get_git_auth_url() -> str:

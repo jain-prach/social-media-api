@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from pydantic import BaseModel
 
-from lib.fastapi.custom_schemas import BaseResponseSchema
+from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
 
 
 class CreateAdmin(BaseModel):
@@ -23,7 +23,7 @@ class AdminResponseData(BaseResponseSchema):
     data: AdminResponse
 
 
-class DeleteAdminResponseData(BaseResponseSchema):
-    """delete admin response with data attribute set to constant string value"""
+class DeleteAdminResponseData(BaseResponseNoDataSchema):
+    """delete admin response with message attribute set to constant string value"""
 
-    data: Optional[str] = "Admin Deleted!"
+    message: Optional[str] = "Admin Deleted!"

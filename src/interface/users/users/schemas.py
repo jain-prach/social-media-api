@@ -2,7 +2,7 @@ import uuid
 from typing import Optional, List
 from pydantic import BaseModel
 
-from lib.fastapi.custom_schemas import BaseResponseSchema
+from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
 from lib.fastapi.custom_enums import ProfileType
 
 
@@ -50,7 +50,7 @@ class GetUser(BaseModel):
     username: str
 
 
-class DeleteUserResponseData(BaseResponseSchema):
-    """delete user response with data attribute set to constant string value"""
+class DeleteUserResponseData(BaseResponseNoDataSchema):
+    """delete user response with message attribute set to constant string value"""
 
-    data: Optional[str] = "User Deleted!"
+    message: Optional[str] = "User Deleted!"
