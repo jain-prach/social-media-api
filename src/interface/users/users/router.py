@@ -1,7 +1,7 @@
 from typing import Annotated, Optional
 import uuid
 
-from fastapi import APIRouter, UploadFile, Depends, File
+from fastapi import APIRouter, UploadFile, Depends, File, Form
 from starlette.status import HTTP_200_OK
 
 from src.setup.config.database import SessionDep
@@ -16,11 +16,11 @@ from .schemas import (
 )
 from .utils import handle_user_create_with_profile_upload
 from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
-from lib.fastapi.utils import check_id, only_own_access
+from lib.fastapi.utils import check_id, only_own_access, only_user_access
 from lib.fastapi.custom_exceptions import (
     NotFoundException,
 )
-from lib.fastapi.custom_enums import Role
+from lib.fastapi.custom_enums import Role, ProfileType
 from lib.fastapi.error_string import (
     get_user_not_found,
 )
@@ -85,7 +85,7 @@ def list_users(current_user: AuthDep, session: SessionDep):
 #     }
 
 
-@router.get("/{id}/", status_code=HTTP_200_OK, response_model=UserResponseData)
+@router.get("/{username}/", status_code=HTTP_200_OK, response_model=UserResponseData)
 def get_user(
     current_user: AuthDep, data: Annotated[GetUser, Depends()], session: SessionDep
 ):
@@ -97,21 +97,31 @@ def get_user(
     return {"message": "User Details", "data": user}
 
 
-@router.put("/{id}/", status_code=HTTP_200_OK, response_model=UserResponseData)
+@router.put("/", status_code=HTTP_200_OK, response_model=UserResponseData)
 def update_user(
     current_user: AuthDep,
     session: SessionDep,
-    user: Annotated[UserWithBaseUserId, Depends(UserWithBaseUserId)],
+    username: str = Form(None),
+    bio: str = Form(None),
+    profile_type: ProfileType = Form(ProfileType.PUBLIC),
     profile: Optional[UploadFile] = File(None),
 ):
-    """update user details"""
-    role = current_user.get("role")
-    user.base_user_id = check_id(user.base_user_id)
+    """update your own user details"""
+    # role = current_user.get("role")
+    # user.base_user_id = check_id(user.base_user_id)
 
-    if role != Role.ADMIN.value:
-        only_own_access(current_user=current_user, access_id=user.base_user_id)
+    # if role != Role.ADMIN.value:
+    #     only_own_access(current_user=current_user, id=user.base_user_id)
+    only_user_access(current_user=current_user)
 
-    if profile:
+    user = UserWithBaseUserId(
+        username=username,
+        bio=bio,
+        profile_type=profile_type,
+        base_user_id=check_id(id=current_user.get("id")),
+    )
+
+    if profile and profile != "":
         user = handle_user_create_with_profile_upload(user=user, profile=profile)
 
     user_app_service = UserAppService(session=session)
@@ -123,11 +133,11 @@ def update_user(
     }
 
 
-@router.delete("/{id}/", status_code=HTTP_200_OK, response_model=DeleteUserResponseData)
+@router.delete("/{base_user_id}/", status_code=HTTP_200_OK, response_model=DeleteUserResponseData)
 def delete_user(current_user: AuthDep, base_user_id: str, session: SessionDep):
     """delete existing user"""
     id = check_id(id=base_user_id)
     if current_user.get("role") != Role.ADMIN.value:
-        only_own_access(current_user=current_user, access_id=id)
+        only_own_access(current_user=current_user, id=id)
     UserAppService(session).delete_user(base_user_id=id)
     return {}

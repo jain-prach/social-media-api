@@ -27,6 +27,7 @@ class Config(BaseSettings):
     TEST_DATABASE_URL:str = f"{DB_ENGINE}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{TEST_DB_NAME}"
 
     STRONG_PASSWORD_PATTERN:str = r"^(?=\S*?[A-Z])(?=\S*?[a-z])(?=\S*?[0-9])(?=\S*?[!@#$%^&~`\\\/<>?\-_\+=\|])\S{8,}$"
+    VALID_USERNAME_PATTERN:str = r"^[A-Za-z0-9_\.]{3,32}$"
 
     JWT_SECRET_KEY:str = os.getenv("JWT_SECRET_KEY")
     JWT_ALGORITHM:str = os.getenv("JWT_ALGORITHM")

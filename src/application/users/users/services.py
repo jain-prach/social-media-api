@@ -13,7 +13,6 @@ from lib.fastapi.custom_enums import ProfileType, Role
 from lib.fastapi.custom_exceptions import ForbiddenException, CustomValidationError
 from lib.fastapi.error_string import get_user_is_private, get_user_not_created
 
-
 class UserAppService:
     """services for user model"""
 
@@ -48,10 +47,15 @@ class UserAppService:
         db_user = self.get_user_by_base_user_id(base_user_id=user.base_user_id)
         if not db_user:
             raise CustomValidationError(get_user_not_created())
+        if db_user.profile_type == ProfileType.PUBLIC:
+            #get followers list with status type pending
+            followers = [follower for follower in db_user.followers]
+            print(followers)
+            #update all to status type approved
         return self.user_service.update(user=user, db_user=db_user)
 
     def delete_user(self, base_user_id: uuid.UUID) -> None:
-        user = self.get_user_by_base_user_id(id=base_user_id)
+        user = self.get_user_by_base_user_id(base_user_id=base_user_id)
         if not user:
             return None
         self.user_service.delete(user=user)

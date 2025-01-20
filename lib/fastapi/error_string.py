@@ -6,7 +6,10 @@ def get_user_not_found() -> str:
 
 
 def get_password_value_error() -> str:
-    return "Max length(8) and Password must contain at least one lower character, one upper character, digit and special symbol"
+    return "Min length(8) and Password must contain at least one lower character, one upper character, digit and special symbol"
+
+def get_username_value_error() -> str:
+    return "Min length(3), Max length(32), Username cannot include spaces and symbols other than . or _"
 
 
 def get_incorrect_password() -> str:
