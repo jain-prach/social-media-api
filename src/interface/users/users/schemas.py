@@ -2,12 +2,13 @@ import uuid
 import re
 from typing import Optional, List
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, field_serializer
 
 from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
 from lib.fastapi.custom_enums import ProfileType
 from lib.fastapi.error_string import get_username_value_error
 from src.setup.config.settings import settings
+from src.infrastructure.file_upload.services import Boto3Service
 
 
 class UserSchema(BaseModel):
@@ -40,6 +41,14 @@ class UserResponse(UserSchema):
     """user response valid fields"""
 
     profile: Optional[str]
+
+    @field_serializer('profile')
+    def serialize_profile(self, profile: str):
+        if profile:
+            boto3_service = Boto3Service()
+            presigned_url = boto3_service.get_presigned_url(object_key=profile)
+            return presigned_url
+        return None
 
 
 class UserResponseData(BaseResponseSchema):
