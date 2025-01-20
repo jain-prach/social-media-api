@@ -55,7 +55,7 @@ def list_sent_requests(current_user: AuthDep, session: SessionDep):
     return dict(data=follow_list)
 
 
-@router.get(
+@router.post(
     "ers/",
     status_code=HTTP_200_OK,
     response_model=FollowRequestListReceivedResponseData,
@@ -69,7 +69,7 @@ def list_followers(current_user: AuthDep, user: FollowRequestSchema, session: Se
     return dict(data=followers)
 
 
-@router.get(
+@router.post(
     "ing/", status_code=HTTP_200_OK, response_model=FollowRequestListSentResponseData
 )
 def list_following(current_user: AuthDep, user: FollowRequestSchema, session: SessionDep):
@@ -88,10 +88,10 @@ def send_request(current_user: AuthDep, user: FollowRequestSchema, session: Sess
     """send request to mentioned user by username"""
     only_user_access(current_user=current_user)
     follow_app_service = FollowAppService(session=session)
-    follow = follow_app_service.create_follow_request(
+    db_follow = follow_app_service.create_follow_request(
         follower_id=check_id(current_user.get("id")), username=user.username
     )
-    return dict(data=follow)
+    return dict(data=db_follow)
 
 
 @router.post(

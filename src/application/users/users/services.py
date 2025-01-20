@@ -9,7 +9,7 @@ from src.domain.models import User
 from src.domain.users.users.services import UserService
 from src.interface.users.users.schemas import UserWithProfile, UserWithBaseUserId
 from src.infrastructure.file_upload.services import Boto3Service
-from lib.fastapi.custom_enums import ProfileType, Role
+from lib.fastapi.custom_enums import ProfileType, Role, StatusType
 from lib.fastapi.custom_exceptions import ForbiddenException, CustomValidationError
 from lib.fastapi.error_string import get_user_is_private, get_user_not_created
 
@@ -47,11 +47,13 @@ class UserAppService:
         db_user = self.get_user_by_base_user_id(base_user_id=user.base_user_id)
         if not db_user:
             raise CustomValidationError(get_user_not_created())
-        if db_user.profile_type == ProfileType.PUBLIC:
+        if user.profile_type == ProfileType.PUBLIC:
             #get followers list with status type pending
             followers = [follower for follower in db_user.followers]
-            print(followers)
             #update all to status type approved
+            for follower in followers:
+                if follower.status == StatusType.PENDING:
+                    follower.status = StatusType.APPROVED
         return self.user_service.update(user=user, db_user=db_user)
 
     def delete_user(self, base_user_id: uuid.UUID) -> None:
@@ -68,7 +70,7 @@ class UserAppService:
             user.profile_type == ProfileType.PRIVATE
         ) and current_user.base_user.role != Role.ADMIN:
             followers_user_id = [follower.follower_id for follower in user.followers]
-            if current_user != user or current_user.id not in followers_user_id:
+            if current_user != user and current_user.id not in followers_user_id:
                 raise ForbiddenException(get_user_is_private())
 
     def create_dummy_user(self, base_user_id: uuid.UUID) -> User:

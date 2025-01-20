@@ -2,6 +2,7 @@ import pytz
 import random
 import uuid
 from typing import List
+import re
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -83,3 +84,11 @@ def get_after_date_from_enum(value:FilterDates) -> datetime:
     else:
         delta = relativedelta(years=10)
     return today-delta
+
+def get_unique_constraint_error(error_message:str) -> str:
+    error_pattern = r"Key \((.+)\)=\((.+?)\)"
+    match = re.search(error_pattern, error_message)
+    if match:
+        column_name = match.group(1)  # Extracts 'object'
+        column_value = match.group(2)  # Extracts 'value'
+        return "{} {} already exists.".format(column_name.capitalize(), column_value)

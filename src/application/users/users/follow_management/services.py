@@ -104,14 +104,14 @@ class FollowAppService:
     def send_request(self, follower: User, user: User) -> FollowersModel:
         """send request to the user for private account"""
         follow = FollowRequest(
-            follower_id=follower.id, user=user.id, status=StatusType.PENDING
+            follower_id=follower.id, following_id=user.id, status=StatusType.PENDING
         )
         return self.follow_service.create(follow=follow)
 
     def create_follower(self, follower: User, user: User) -> FollowersModel:
         """create follower of the user for public account"""
         follow = FollowRequest(
-            follower_id=follower.id, user=user.id, status=StatusType.APPROVED
+            follower_id=follower.id, following_id=user.id, status=StatusType.APPROVED
         )
         return self.follow_service.create(follow=follow)
 

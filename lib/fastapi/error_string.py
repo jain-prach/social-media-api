@@ -79,10 +79,18 @@ def get_admin_not_allowed() -> str:
 def get_send_request_to_yourself() -> str:
     return "A user cannot follow themselves"
 
+def get_request_already_sent() -> str:
+    return "Request already sent!"
+
 
 def get_post_not_found() -> str:
     return "Post not found!"
 
+def get_post_already_liked() -> str:
+    return "Post already liked!"
+
+def get_post_reported_once() -> str:
+    return "You have already reported the post! We will look into it and get back to you!"
 
 def get_user_is_private() -> str:
     return "This is an private user. You must follow to access their contents."

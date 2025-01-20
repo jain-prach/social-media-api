@@ -101,8 +101,8 @@ def get_user(
 def update_user(
     current_user: AuthDep,
     session: SessionDep,
-    username: str = Form(None),
-    bio: str = Form(None),
+    username: str = Form(...),
+    bio: str = Form(...),
     profile_type: ProfileType = Form(ProfileType.PUBLIC),
     profile: Optional[UploadFile] = File(None),
 ):
