@@ -109,7 +109,7 @@ def update_user(
     user.base_user_id = check_id(user.base_user_id)
 
     if role != Role.ADMIN.value:
-        only_own_access(current_user=current_user, id=user.base_user_id)
+        only_own_access(current_user=current_user, access_id=user.base_user_id)
 
     if profile:
         user = handle_user_create_with_profile_upload(user=user, profile=profile)
@@ -128,6 +128,6 @@ def delete_user(current_user: AuthDep, base_user_id: str, session: SessionDep):
     """delete existing user"""
     id = check_id(id=base_user_id)
     if current_user.get("role") != Role.ADMIN.value:
-        only_own_access(current_user=current_user, id=id)
+        only_own_access(current_user=current_user, access_id=id)
     UserAppService(session).delete_user(base_user_id=id)
     return {}

@@ -8,11 +8,12 @@ from dateutil.relativedelta import relativedelta
 from sqlmodel import Session
 
 from lib.fastapi.custom_enums import Role, FilterDates
-from lib.fastapi.custom_exceptions import CustomValidationError, ForbiddenException
+from lib.fastapi.custom_exceptions import CustomValidationError, ForbiddenException, UnauthorizedException
 from lib.fastapi.error_string import (
     get_incorrect_id,
     get_no_permission,
     get_invalid_file_type,
+    get_admin_not_allowed,
 )
 from src.setup.config.settings import settings
 
@@ -48,12 +49,18 @@ def get_valid_post_formats_list() -> List[str]:
     return ["image/jpeg", "image/png", "image/heic", "image/jpg", "video/mp4", "video/mpeg"]
 
 def only_admin_access(current_user: dict) -> None:
+    """only admin users can have access"""
     if current_user.get("role") == Role.USER.value:
         raise ForbiddenException(get_no_permission())
 
+def only_user_access(current_user:dict) -> None:
+    """only normal users can have access"""
+    if current_user.get("role") == Role.ADMIN.value:
+        raise UnauthorizedException(get_admin_not_allowed())
 
-def only_own_access(current_user: dict, id: uuid.UUID) -> None:
-    if uuid.UUID(current_user.get("id")) != id:
+def only_own_access(current_user: dict, access_id: uuid.UUID) -> None:
+    """only own details access"""
+    if uuid.UUID(current_user.get("id")) != access_id:
         raise ForbiddenException(get_no_permission())
     return None
 

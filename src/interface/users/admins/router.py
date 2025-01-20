@@ -63,7 +63,7 @@ def delete_user(current_user: AuthDep, base_user_id: str, session: SessionDep):
     """delete existing user"""
     only_admin_access(current_user=current_user)
     id = check_id(id=base_user_id)
-    only_own_access(current_user=current_user, id=id)
+    only_own_access(current_user=current_user, access_id=id)
     admin_app_service = AdminAppService(session)
     admin_app_service.delete_admin(base_user_id=id)
     return {}

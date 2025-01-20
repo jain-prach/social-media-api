@@ -64,7 +64,7 @@ class UserAppService:
             user.profile_type == ProfileType.PRIVATE
         ) and current_user.base_user.role != Role.ADMIN:
             followers_user_id = [follower.follower_id for follower in user.followers]
-            if current_user != user and current_user.id not in followers_user_id:
+            if current_user != user or current_user.id not in followers_user_id:
                 raise ForbiddenException(get_user_is_private())
 
     def create_dummy_user(self, base_user_id: uuid.UUID) -> User:
