@@ -21,7 +21,9 @@ class AdminService:
 
     def create(self, admin: CreateAdmin) -> Admin:
         """create admin in the database"""
-        return db_session_value_create(session=self.db_session, value=admin)
+        db_admin = Admin.model_validate(admin)
+        db_session_value_create(session=self.db_session, value=db_admin)
+        return db_admin
 
     def delete(self, admin: Admin) -> None:
         """delete admin from the database"""

@@ -5,10 +5,11 @@ from src.interface.auth.dependencies import AuthDep
 from src.setup.config.database import SessionDep
 from .schemas import LikePost, LikePostResponseData, LikeDeleteResponseData
 from src.application.posts.likes.services import LikeAppService
+from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
 from lib.fastapi.utils import check_id
 from ..utils import check_permission_to_post
 
-router = APIRouter(prefix="/like", tags=["posts"])
+router = APIRouter(prefix="/like", tags=["posts"], route_class=UniqueConstraintErrorRoute)
 
 @router.post("/{post_id}/", status_code=HTTP_200_OK, response_model=LikePostResponseData)
 def like_post(current_user:AuthDep, post_id:str, session:SessionDep):

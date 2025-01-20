@@ -6,11 +6,30 @@ from sqlmodel import Session
 from src.domain.posts.services import PostService
 from src.interface.posts.schemas import PostSchema
 from src.application.users.users.services import UserAppService
-from src.domain.models import Post
+from src.application.users.services import BaseUserAppService
+from src.domain.models import Post, BaseUser
 from lib.fastapi.custom_exceptions import NotFoundException
 from lib.fastapi.error_string import get_post_not_found, get_user_not_found
 from lib.fastapi.custom_enums import FilterDates
 from src.infrastructure.file_upload.services import Boto3Service
+from src.infrastructure.email_service.services import SendgridService
+from src.setup.config.settings import settings
+
+class ReportedPostEmailService(SendgridService):
+    """service to send email for reported post"""
+    def send_email_for_reported_post(self, user: BaseUser):
+        """sends otp to the user's email"""
+        self._send_template_email(
+            sender=settings.REPORT_EMAIL_SENDER,
+            receivers=[
+                {
+                    "email": user.email,
+                    "name": user.user.username if user.user else "User",
+                }
+            ],
+            template_id=settings.REPORT_POST_DELETE_TEMPLATE
+        )
+
 
 
 class PostAppService:
@@ -64,13 +83,33 @@ class PostAppService:
         if not db_post:
             raise NotFoundException(get_post_not_found())
         return self.post_service.update(post=post, db_post=db_post)
-
-    def delete_post(self, post_id: uuid.UUID, user_id: uuid.UUID) -> None:
+    
+    def delete_post(self, db_post:Post) -> None:
         """delete post"""
-        db_post = self.get_post_by_post_id_for_user(post_id=post_id, user_id=user_id)
-        if not db_post:
-            return None
         # delete from minio
         for file in db_post.media:
             Boto3Service().delete_file(object_key=file.media_url)
         self.post_service.delete(db_post=db_post)
+
+    def delete_post_by_user(self, post_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """delete post if user owns the post"""
+        db_post = self.get_post_by_post_id_for_user(post_id=post_id, user_id=user_id)
+        if not db_post:
+            return None
+        self.delete_post(db_post)
+
+    def delete_post_by_admin(self, post_id: uuid.UUID) -> None:
+        """delete post by post_id"""
+        db_post = self.get_post_by_id(id=post_id)
+        if not db_post:
+            # return None
+            raise NotFoundException(get_post_not_found())
+        # send email to post owners
+        user_app_service = UserAppService(session=self.db_session)
+        user = user_app_service.get_user_by_id(id=db_post.posted_by)
+        if not user:
+            raise NotFoundException(get_user_not_found())
+        base_user_app_service = BaseUserAppService(session=self.db_session)
+        base_user = base_user_app_service.get_base_user_by_id(id=user.base_user_id)
+        ReportedPostEmailService().send_email_for_reported_post(user=base_user)
+        self.delete_post(db_post)

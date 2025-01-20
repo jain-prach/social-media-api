@@ -5,10 +5,11 @@ from src.interface.auth.dependencies import AuthDep
 from src.setup.config.database import SessionDep
 from .schemas import ReportPostSchema, ReportPostData, ReportPostResponseData
 from src.application.posts.reported_posts.services import ReportPostAppService
+from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
 from lib.fastapi.utils import check_id
 from ..utils import check_permission_to_post
 
-router = APIRouter(prefix="/report_post", tags=["posts"])
+router = APIRouter(prefix="/report_post", tags=["posts"], route_class=UniqueConstraintErrorRoute)
 
 
 @router.post(

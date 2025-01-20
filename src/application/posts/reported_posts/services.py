@@ -1,4 +1,6 @@
-from typing import Optional
+from typing import Optional, List
+import uuid
+
 from sqlmodel import Session
 
 from src.interface.posts.reported_posts.schemas import ReportPostData
@@ -13,6 +15,14 @@ class ReportPostAppService:
     def __init__(self, session: Session):
         self.db_session = session
         self.report_post_service = ReportPostService(session=self.db_session)
+
+    def get_reported_post_by_id(self, report_post_id:uuid.UUID) -> Optional[ReportPost]:
+        """get reported post by id"""
+        return self.report_post_service.get_reported_post_by_id(id=report_post_id)
+
+    def get_all_reported_posts(self) -> List[ReportPost]:
+        """get all reported posts"""
+        return self.report_post_service.get_all_reported_posts()
 
     def report_post(self, report: ReportPostData) -> Optional[ReportPost]:
         """report post for post_id"""

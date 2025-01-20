@@ -36,6 +36,8 @@ class Config(BaseSettings):
     SENDGRID_API_KEY:str = os.getenv("SENDGRID_API_KEY")
     FORGOT_PASSWORD_TEMPLATE:str = os.getenv("FORGOT_PASSWORD_TEMPLATE")
     SENDGRID_SENDER:EmailStr = os.getenv("SENDGRID_SENDER")
+    REPORT_POST_DELETE_TEMPLATE:str = os.getenv("REPORT_POST_DELETE_TEMPLATE")
+    REPORT_EMAIL_SENDER:EmailStr = os.getenv("REPORT_EMAIL_SENDER")
 
     OTP_EXPIRE_TIME:dict = ast.literal_eval(os.getenv("OTP_EXPIRE_TIME"))
 

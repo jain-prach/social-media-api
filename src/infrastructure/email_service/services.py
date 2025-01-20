@@ -1,4 +1,4 @@
-from typing import TypedDict, List
+from typing import TypedDict, List, Optional
 
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, To, TemplateId
@@ -48,7 +48,7 @@ class SendgridService:
         sender: str,
         receivers: List[EmailDict],
         template_id: TemplateId,
-        template_dict: dict,
+        template_dict: Optional[dict] = None,
     ):
         """
         ### send template email
@@ -60,9 +60,10 @@ class SendgridService:
         """
         to_emails = self._create_receiver_email(receivers)
         mail = Mail(from_email=sender, to_emails=to_emails)
-        for receiver in to_emails:
-            personalization = self._create_personalizations(receiver, template_dict)
-            mail.add_personalization(personalization)
+        if template_dict:
+            for receiver in to_emails:
+                personalization = self._create_personalizations(receiver, template_dict)
+                mail.add_personalization(personalization)
         mail.template_id = template_id
         response = self._sgc.send(mail)
         return response

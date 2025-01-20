@@ -88,6 +88,10 @@ class BaseUserAppService:
     def get_base_user_by_id(self, id: uuid.UUID) -> Optional[BaseUser]:
         """get base user by id"""
         return self.base_user_service.get_base_user_by_id(id=id)
+    
+    # def get_base_user_by_user_id(self, user_id: uuid.UUID) -> Optional[BaseUser]:
+    #     """get base user by user id"""
+    #     return self.base_user_service.get_base_user_by_user_id(user_id=user_id)
 
     def get_all_base_users(self) -> List[BaseUser]:
         """returns list of all base users"""

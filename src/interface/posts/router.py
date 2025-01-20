@@ -94,5 +94,5 @@ def delete_post(current_user: AuthDep, id: str, session: SessionDep):
     """delete post by current user"""
     user = check_permission_to_post(current_user=current_user, session=session)
     post_id = check_id(id=id)
-    PostAppService(session=session).delete_post(post_id=post_id, user_id=user.id)
+    PostAppService(session=session).delete_post_by_user(post_id=post_id, user_id=user.id)
     return {}

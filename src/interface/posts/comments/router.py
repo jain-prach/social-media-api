@@ -5,10 +5,11 @@ from src.interface.auth.dependencies import AuthDep
 from src.setup.config.database import SessionDep
 from .schemas import CommentPostSchema, CommentPost, CommentPostResponseData, CommentDeleteResponseData
 from src.application.posts.comments.services import CommentAppService
+from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
 from lib.fastapi.utils import check_id
 from ..utils import check_permission_to_post
 
-router = APIRouter(prefix="/comment", tags=["posts"])
+router = APIRouter(prefix="/comment", tags=["posts"], route_class=UniqueConstraintErrorRoute)
 
 @router.post("/{post_id}/", status_code=HTTP_200_OK, response_model=CommentPostResponseData)
 def comment_post(current_user:AuthDep, post_id:str, post:CommentPostSchema, session:SessionDep):
