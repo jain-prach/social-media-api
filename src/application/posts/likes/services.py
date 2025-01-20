@@ -10,15 +10,31 @@ from src.application.posts.services import PostAppService
 
 class LikeAppService:
     """like application service for handling likes operation"""
-    def __init__(self, session:Session):
+
+    def __init__(self, session: Session):
         self.db_session = session
         self.like_service = LikeService(session=self.db_session)
 
-    def like_post(self, like:LikePost) -> Optional[Likes]:
+    def get_like_by_post_id_and_user_id(
+        self, like:LikePost
+    ) -> Optional[Likes]:
+        """get like instance by post id and user id"""
+        return self.like_service.get_like_by_post_id_and_user_id(
+            post_id=like.post_id, liked_by=like.liked_by
+        )
+
+    def like_post(self, like: LikePost) -> Optional[Likes]:
         """like post for post_id"""
         post_app_service = PostAppService(session=self.db_session)
         post = post_app_service.get_post_by_id(id=like.post_id)
-        liked_by_list = [like.liked_by for like in post.likes]
-        if post and like.liked_by not in liked_by_list:
-            return self.like_service.create_like(like=like)
+        # liked_by_list = [like.liked_by for like in post.likes] # and like.liked_by not in liked_by_list
+        if post:
+            return self.like_service.create(like=like)
+        return None
+
+    def remove_like(self, like:LikePost) -> None:
+        """remove like from the post"""
+        db_like = self.get_like_by_post_id_and_user_id(like=like)
+        if db_like:
+            self.like_service.delete(db_like=db_like)
         return None

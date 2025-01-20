@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 from sqlmodel import Session
 
 from lib.fastapi.custom_enums import Role, FilterDates
-from lib.fastapi.custom_exceptions import CustomValidationError, ForbiddenException, UnauthorizedException
+from lib.fastapi.custom_exceptions import CustomValidationError, ForbiddenException
 from lib.fastapi.error_string import (
     get_incorrect_id,
     get_no_permission,
@@ -57,7 +57,7 @@ def only_admin_access(current_user: dict) -> None:
 def only_user_access(current_user:dict) -> None:
     """only normal users can have access"""
     if current_user.get("role") == Role.ADMIN.value:
-        raise UnauthorizedException(get_admin_not_allowed())
+        raise ForbiddenException(get_admin_not_allowed())
 
 def only_own_access(current_user: dict, access_id: uuid.UUID) -> None:
     """only own details access"""

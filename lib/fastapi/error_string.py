@@ -2,7 +2,7 @@ from typing import List
 
 
 def get_user_not_found() -> str:
-    return "User doesn't exist!"
+    return "User not found!"
 
 
 def get_password_value_error() -> str:
