@@ -38,6 +38,8 @@ class Config(BaseSettings):
     SENDGRID_SENDER:EmailStr = os.getenv("SENDGRID_SENDER")
     REPORT_POST_DELETE_TEMPLATE:str = os.getenv("REPORT_POST_DELETE_TEMPLATE")
     REPORT_EMAIL_SENDER:EmailStr = os.getenv("REPORT_EMAIL_SENDER")
+    POST_NOTIFICATION_TEMPLATE:str = os.getenv("POST_NOTIFICATION_TEMPLATE")
+    POST_NOTIFICATION_SENDER:EmailStr = os.getenv("POST_NOTIFICATION_SENDER")
 
     OTP_EXPIRE_TIME:dict = ast.literal_eval(os.getenv("OTP_EXPIRE_TIME"))
 
@@ -58,6 +60,15 @@ class Config(BaseSettings):
     PRESIGNED_URL_TIME:dict = ast.literal_eval(os.getenv("PRESIGNED_URL_TIME"))
 
     POST_PAGINATION_SIZE:int = int(os.getenv("POST_PAGINATION_SIZE"))
+    POST_COUNT_TO_NOTIFY:int = int(os.getenv("POST_COUNT_TO_NOTIFY"))
+
+    STRIPE_API_KEY:str = os.getenv("STRIPE_API_KEY")
+    # STRIPE_WEBHOOK_SECRET:str = os.getenv("STRIPE_WEBHOOK_SECRET")
+    STRIPE_WEBHOOK_SECRET_CHECKOUT_SUCCESS:str = os.getenv("STRIPE_WEBHOOK_SECRET_CHECKOUT_SUCCESS")
+    STRIPE_PRODUCT_NAME:str = os.getenv("STRIPE_PRODUCT_NAME")
+    STRIPE_SUCCESS_URL:str = os.getenv("STRIPE_SUCCESS_URL")
+    STRIPE_CANCEL_URL:str = os.getenv("STRIPE_CANCEL_URL")
+
 
 
 settings = Config()

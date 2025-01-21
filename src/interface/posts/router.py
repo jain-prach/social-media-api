@@ -85,7 +85,8 @@ def update_post(current_user: AuthDep, session: SessionDep, id:str, caption:Opti
     user = check_permission_to_post(current_user=current_user, session=session)
     post_id = check_id(id=id)
     post = PostSchema(caption=caption, posted_by=user.id)
-    db_post = PostAppService(session=session).update_post(post_id=post_id, post=post)
+    post_app_service = PostAppService(session=session)
+    db_post = post_app_service.update_post(post_id=post_id, post=post)
     return dict(data=db_post)
 
 
@@ -94,5 +95,6 @@ def delete_post(current_user: AuthDep, id: str, session: SessionDep):
     """delete post by current user"""
     user = check_permission_to_post(current_user=current_user, session=session)
     post_id = check_id(id=id)
-    PostAppService(session=session).delete_post_by_user(post_id=post_id, user_id=user.id)
+    post_app_service = PostAppService(session=session)
+    post_app_service.delete_post_by_user(post_id=post_id, user_id=user.id)
     return {}

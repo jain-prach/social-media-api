@@ -4,7 +4,7 @@ import uuid
 from fastapi import APIRouter, Depends
 from starlette.status import HTTP_200_OK
 
-from .schemas import GetBaseUser, BaseUserResponseData, BaseUserListResponseData, UpdateBaseUser, DeleteBaseUserResponseData
+from .schemas import GetBaseUser, BaseUserResponseData, BaseUserListResponseData, DeleteBaseUserResponseData
 from ..auth.dependencies import AuthDep
 from src.setup.config.database import SessionDep
 from src.application.users.services import BaseUserAppService
@@ -63,29 +63,29 @@ def get_own_user(current_user:AuthDep, session:SessionDep):
     }
 
 
-@router.put("/{id}/", status_code=HTTP_200_OK, response_model=BaseUserResponseData)
-def update_user(
-    current_user: AuthDep,
-    user: UpdateBaseUser,
-    session: SessionDep
-):
-    """update existing user"""
-    only_admin_access(current_user=current_user)
-    base_user_app_service = BaseUserAppService(session)
+# @router.put("/{id}/", status_code=HTTP_200_OK, response_model=BaseUserResponseData)
+# def update_user(
+#     current_user: AuthDep,
+#     user: UpdateBaseUser,
+#     session: SessionDep
+# ):
+#     """update existing user"""
+#     only_admin_access(current_user=current_user)
+#     base_user_app_service = BaseUserAppService(session)
 
-    #ONLY ROLE UPDATE SHOULDN'T BE ACCESSIBLE TO USER
-    # id = check_id(id=user.id)
-    # if current_user.get("role") == Role.USER.value:
-    #     if id != check_id(current_user.get("id")):
-    #         raise ForbiddenException(get_no_permission())  
+#     #ONLY ROLE UPDATE SHOULDN'T BE ACCESSIBLE TO USER
+#     # id = check_id(id=user.id)
+#     # if current_user.get("role") == Role.USER.value:
+#     #     if id != check_id(current_user.get("id")):
+#     #         raise ForbiddenException(get_no_permission())  
         
-    db_user = base_user_app_service.update_base_user(user=user)
+#     db_user = base_user_app_service.update_base_user(user=user)
 
-    return {
-        "message": "New user updated",
-        "success": True,
-        "data": db_user,
-    }
+#     return {
+#         "message": "New user updated",
+#         "success": True,
+#         "data": db_user,
+#     }
 
 @router.delete("/{id}/", status_code=HTTP_200_OK, response_model=DeleteBaseUserResponseData)
 def delete_user(current_user: AuthDep, id: str, session: SessionDep):

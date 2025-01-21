@@ -33,3 +33,21 @@ class ReportReason(str, Enum):
     HARASSMENT = "harassment"
     COPYRIGHT = "copyright"
     OTHER = "other"
+
+class ServiceModel(str, Enum):
+    SUBSCRIPTION = "subscription"
+    PRODUCT = "product"
+
+class TransactionStatus(str, Enum):
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+
+class SubscriptionInterval(str, Enum):
+    YEARLY = "yearly"
+    MONTHLY = "monthly"
+    DAILY = "daily"
+
+class PriceModel(int, Enum):
+    YEARLY = 400
+    MONTHLY = 100
+    DAILY = 20
