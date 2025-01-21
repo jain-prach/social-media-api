@@ -15,8 +15,8 @@ class User(BaseModel, table=True):
     :model: for regular user management (app users without admin rights)
     """
 
-    base_user_id: uuid.UUID = Field(foreign_key="baseuser.id", ondelete="CASCADE")
-    username: str = Field(unique=True, nullable=False)
+    base_user_id: uuid.UUID = Field(index=True, foreign_key="baseuser.id", ondelete="CASCADE")
+    username: str = Field(index=True, unique=True, nullable=False)
     bio: str = Field(default=None, nullable=True)
     profile: Optional[str] = Field(default=None, nullable=True)
     is_verified: bool = Field(default=False, nullable=False)

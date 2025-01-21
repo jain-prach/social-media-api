@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 from src.interface.users.users.schemas import UserWithProfile, UserWithBaseUserId
 from .models import User
 from lib.fastapi.utils import db_session_value_create
+from lib.fastapi.custom_enums import ProfileType
 
 
 class UserService:
@@ -34,15 +35,19 @@ class UserService:
         """get all users from the database"""
         return self.db_session.exec(select(User)).all()
 
+    def get_all_public_users(self) -> List[User]:
+        """get all users with profile type public from the database"""
+        return self.db_session.exec(
+            select(User).where(User.profile_type == ProfileType.PUBLIC)
+        ).all()
+
     def create(self, user: UserWithBaseUserId | UserWithProfile) -> User:
         """create user in the database"""
         db_user = User.model_validate(user)
         db_session_value_create(session=self.db_session, value=db_user)
         return db_user
 
-    def update(
-        self, user: UserWithBaseUserId | UserWithProfile, db_user: User
-    ) -> User:
+    def update(self, user: UserWithBaseUserId | UserWithProfile, db_user: User) -> User:
         """update user in the database"""
         db_user.sqlmodel_update(user)
         db_session_value_create(session=self.db_session, value=db_user)
