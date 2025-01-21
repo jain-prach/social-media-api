@@ -2,6 +2,7 @@ import pytz
 import random
 import uuid
 from typing import List
+import re
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -13,6 +14,7 @@ from lib.fastapi.error_string import (
     get_incorrect_id,
     get_no_permission,
     get_invalid_file_type,
+    get_admin_not_allowed,
 )
 from src.setup.config.settings import settings
 
@@ -48,12 +50,18 @@ def get_valid_post_formats_list() -> List[str]:
     return ["image/jpeg", "image/png", "image/heic", "image/jpg", "video/mp4", "video/mpeg"]
 
 def only_admin_access(current_user: dict) -> None:
+    """only admin users can have access"""
     if current_user.get("role") == Role.USER.value:
         raise ForbiddenException(get_no_permission())
 
+def only_user_access(current_user:dict) -> None:
+    """only normal users can have access"""
+    if current_user.get("role") == Role.ADMIN.value:
+        raise ForbiddenException(get_admin_not_allowed())
 
-def only_own_access(current_user: dict, id: uuid.UUID) -> None:
-    if uuid.UUID(current_user.get("id")) != id:
+def only_own_access(current_user: dict, access_id: uuid.UUID) -> None:
+    """only own details access"""
+    if uuid.UUID(current_user.get("id")) != access_id:
         raise ForbiddenException(get_no_permission())
     return None
 
@@ -76,3 +84,11 @@ def get_after_date_from_enum(value:FilterDates) -> datetime:
     else:
         delta = relativedelta(years=10)
     return today-delta
+
+def get_unique_constraint_error(error_message:str) -> str:
+    error_pattern = r"Key \((.+)\)=\((.+?)\)"
+    match = re.search(error_pattern, error_message)
+    if match:
+        column_name = match.group(1)  # Extracts 'object'
+        column_value = match.group(2)  # Extracts 'value'
+        return "{} {} already exists.".format(column_name.capitalize(), column_value)

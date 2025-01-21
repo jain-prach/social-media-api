@@ -1,7 +1,9 @@
 from fastapi.responses import JSONResponse
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_422_UNPROCESSABLE_ENTITY
+from pydantic import ValidationError
+
 from .custom_exceptions import (
     CustomException,
     UnauthorizedException,
@@ -23,6 +25,11 @@ class HandleExceptionMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
             return response
+        except ValidationError as e:
+            return JSONResponse(
+                status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+                content={"message": f"{e}", "success": False, "data": {}},
+            )
         except (
             UnauthorizedException,
             NotFoundException,

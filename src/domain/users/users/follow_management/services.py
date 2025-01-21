@@ -3,12 +3,12 @@ import uuid
 
 from sqlmodel import Session, select
 
-from src.domain.models import FollowersModel, User
-from lib.fastapi.custom_enums import StatusType
+from src.domain.models import FollowersModel
+from src.interface.users.users.follow_management.schemas import FollowRequest
 from lib.fastapi.utils import db_session_value_create
 
 
-class FollowerService:
+class FollowService:
     """Follower Service class for managing database operations for follower Model"""
 
     def __init__(self, session: Session):
@@ -27,27 +27,21 @@ class FollowerService:
             .where(FollowersModel.follower_id == follower_id)
             .where(FollowersModel.following_id == following_id)
         ).first()
-
-    def create_follow_request(self, follower: User, user: User, status:StatusType) -> FollowersModel:
-        """create follow request with status pending"""
-        follow = {
-            "follower_id": follower.id,
-            "following_id": user.id,
-            "status": status,
-        }
+    
+    def create(self, follow:FollowRequest) -> FollowersModel:
+        """create follow request in the database"""
         db_follow = FollowersModel.model_validate(follow)
         db_session_value_create(session=self.db_session, value=db_follow)
         return db_follow
 
-    def update_status(self, follow: FollowersModel, status:StatusType) -> FollowersModel:
-        """updating follow request status"""
-        db_follow = follow
-        follow.status = status
+
+    def update(self, follow: FollowRequest, db_follow:FollowersModel) -> FollowersModel:
+        """updating follow request in the database"""
         db_follow.sqlmodel_update(follow)
         db_session_value_create(session=self.db_session, value=db_follow)
         return db_follow
     
-    def delete_follow_request(self, follow: FollowersModel) -> None:
+    def delete(self, db_follow: FollowersModel) -> None:
         """deleting follow request for rejected status"""
-        self.db_session.delete(follow)
+        self.db_session.delete(db_follow)
         self.db_session.commit()

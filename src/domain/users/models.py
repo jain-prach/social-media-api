@@ -1,7 +1,5 @@
 from typing import Optional, TYPE_CHECKING
 import uuid
-import binascii
-import os
 
 from sqlmodel import Field, Column, Enum, Relationship
 
@@ -20,13 +18,15 @@ class BaseUser(BaseModel, table=True):
     password: Optional[str] = Field(default=None)
     role: Role = Field(default=Role.USER, sa_column=Column(Enum(Role)))
     is_active: Optional[bool] = Field(default=True, nullable=False)
-    admin: Optional["Admin"] = Relationship(back_populates="base_user")
-    user: Optional["User"] = Relationship(back_populates="base_user")
+    admin: Optional["Admin"] = Relationship(back_populates="base_user", cascade_delete=True)
+    user: Optional["User"] = Relationship(back_populates="base_user", cascade_delete=True)
+    otp: Optional["Otp"] = Relationship(back_populates="base_user", cascade_delete=True)
 
 class Otp(BaseModel, table=True):
     """
     :model: otp model for otp management
     """
     otp:int = Field(default=generate_otp())
-    user_id: uuid.UUID = Field(foreign_key="baseuser.id", ondelete="CASCADE", unique=True)
-    otp_token:str = Field(default_factory=binascii.hexlify(os.urandom(20)).decode, nullable=False)
+    base_user_id: uuid.UUID = Field(foreign_key="baseuser.id", ondelete="CASCADE", unique=True)
+
+    base_user: "BaseUser" = Relationship(back_populates="otp")

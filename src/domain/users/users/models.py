@@ -30,14 +30,16 @@ class User(BaseModel, table=True):
     
     followers: List["FollowersModel"] = Relationship(
         back_populates="following",
+        cascade_delete=True,
         sa_relationship_kwargs={
-            "primaryjoin": "User.id == FollowersModel.following_id",
+            "primaryjoin": "User.id == FollowersModel.following_id"
         },
     )
     
     following: List["FollowersModel"] = Relationship(
         back_populates="follower",
+        cascade_delete=True,
         sa_relationship_kwargs={
-            "primaryjoin": "User.id == FollowersModel.follower_id",
+            "primaryjoin": "User.id == FollowersModel.follower_id"
         },
     )

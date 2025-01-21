@@ -5,9 +5,11 @@ from typing import List, Optional
 from pydantic import BaseModel, EmailStr, field_validator
 
 from lib.fastapi.custom_enums import Role
-from lib.fastapi.custom_schemas import BaseResponseSchema
+from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
 from lib.fastapi.error_string import get_password_value_error
 from src.setup.config.settings import settings
+from src.interface.users.users.schemas import UserResponse, UserWithBaseUserId
+from src.interface.users.admins.schemas import AdminResponse, CreateAdmin
 
 
 class BaseUserSchema(BaseModel):
@@ -34,6 +36,8 @@ class BaseUserResponse(BaseUserSchema):
     """Base user response: includes ID field"""
 
     id: uuid.UUID
+    user: Optional[UserResponse]
+    admin: Optional[AdminResponse]
 
 
 class BaseUserResponseData(BaseResponseSchema):
@@ -61,7 +65,7 @@ class UpdateBaseUser(BaseModel):
     role: Role
 
 
-class DeleteBaseUserResponseData(BaseResponseSchema):
-    """delete base user response with data attribute set to constant string value"""
+class DeleteBaseUserResponseData(BaseResponseNoDataSchema):
+    """delete base user response data with message attribute set to constant string value"""
 
-    data: Optional[str] = "Base User Deleted!"
+    message: Optional[str] = "Base User Deleted!"

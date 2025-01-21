@@ -9,9 +9,9 @@ from ..auth.dependencies import AuthDep
 from src.setup.config.database import SessionDep
 from src.application.users.services import BaseUserAppService
 from lib.fastapi.custom_enums import Role
-from lib.fastapi.custom_exceptions import NotFoundException, ForbiddenException
+from lib.fastapi.custom_exceptions import NotFoundException
 from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
-from lib.fastapi.error_string import get_user_not_found, get_no_permission
+from lib.fastapi.error_string import get_user_not_found
 from lib.fastapi.utils import check_id, only_admin_access
 
 
@@ -38,49 +38,29 @@ def get_user(
     session: SessionDep,
 ):
     """access base user details by id - only Admin access"""
-    base_user_app_service = BaseUserAppService(session)
-    
     only_admin_access(current_user=current_user)
-
+    base_user_app_service = BaseUserAppService(session)
     data.id = check_id(id=data.id)
     user = base_user_app_service.get_base_user_by_id(id=data.id)
-    
     if not user:
         raise NotFoundException(get_user_not_found())
-
     return {
         "message": "User Information",
         "success": True,
-        "data": dict(**user.model_dump()),
+        "data": user,
     }
 
 
-### ME ROUTERS UPDATE
-# @router.get("/me", status_code=HTTP_200_OK, response_model=BaseUserResponseData)
-# def get_own_user(current_user:AuthDep, session:SessionDep):
-#     """access own user details"""
-#     id = current_user.get("id")
-#     user = BaseUserAppService(session=session).get_base_user_by_id(id=id)
-#     return {
-#         "message": "Own Details",
-#         "success": True,
-#         "data": dict(**user.model_dump()),
-#     }
-
-# @router.get("/me/", status_code=HTTP_200_OK, response_model=UserResponseData)
-# def get_own_user(current_user: AuthDep, session: SessionDep):
-#     """get own user details"""
-#     id = current_user.get("id")
-#     user = BaseUserAppService(session=session).get_base_user_by_id(id=id)
-#     if user.role == Role.USER:
-#         if not user.user:
-#             raise NotFoundException(get_user_to_create())
-#         db_user = user.user
-#     else:
-#         if not user.admin:
-#             raise NotFoundException(get_admin_to_create())
-#         db_user = user.admin
-#     return {"message": "Own Details View", "data": {**db_user.model_dump()}}
+@router.get("/me", status_code=HTTP_200_OK, response_model=BaseUserResponseData)
+def get_own_user(current_user:AuthDep, session:SessionDep):
+    """access own user details"""
+    id = current_user.get("id")
+    user = BaseUserAppService(session=session).get_base_user_by_id(id=id)
+    return {
+        "message": "Own Details",
+        "success": True,
+        "data": user,
+    }
 
 
 @router.put("/{id}/", status_code=HTTP_200_OK, response_model=BaseUserResponseData)
@@ -90,19 +70,21 @@ def update_user(
     session: SessionDep
 ):
     """update existing user"""
-    id = check_id(id=user.id)
+    only_admin_access(current_user=current_user)
     base_user_app_service = BaseUserAppService(session)
 
-    if current_user.get("role") == Role.USER.value:
-        if id != check_id(current_user.get("id")):
-            raise ForbiddenException(get_no_permission())  
+    #ONLY ROLE UPDATE SHOULDN'T BE ACCESSIBLE TO USER
+    # id = check_id(id=user.id)
+    # if current_user.get("role") == Role.USER.value:
+    #     if id != check_id(current_user.get("id")):
+    #         raise ForbiddenException(get_no_permission())  
         
     db_user = base_user_app_service.update_base_user(user=user)
 
     return {
         "message": "New user updated",
         "success": True,
-        "data": dict(**db_user.model_dump()),
+        "data": db_user,
     }
 
 @router.delete("/{id}/", status_code=HTTP_200_OK, response_model=DeleteBaseUserResponseData)
@@ -111,4 +93,4 @@ def delete_user(current_user: AuthDep, id: str, session: SessionDep):
     id = check_id(id=id)
     only_admin_access(current_user=current_user)
     BaseUserAppService(session).delete_base_user(id=id)
-    return DeleteBaseUserResponseData()
+    return {}

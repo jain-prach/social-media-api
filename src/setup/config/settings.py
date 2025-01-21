@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from pydantic_settings import BaseSettings
 from pydantic_extra_types.timezone_name import TimeZoneName 
+from pydantic import EmailStr
 
 load_dotenv("env/.env")
 
@@ -26,6 +27,7 @@ class Config(BaseSettings):
     TEST_DATABASE_URL:str = f"{DB_ENGINE}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{TEST_DB_NAME}"
 
     STRONG_PASSWORD_PATTERN:str = r"^(?=\S*?[A-Z])(?=\S*?[a-z])(?=\S*?[0-9])(?=\S*?[!@#$%^&~`\\\/<>?\-_\+=\|])\S{8,}$"
+    VALID_USERNAME_PATTERN:str = r"^[A-Za-z0-9_\.]{3,32}$"
 
     JWT_SECRET_KEY:str = os.getenv("JWT_SECRET_KEY")
     JWT_ALGORITHM:str = os.getenv("JWT_ALGORITHM")
@@ -33,6 +35,9 @@ class Config(BaseSettings):
 
     SENDGRID_API_KEY:str = os.getenv("SENDGRID_API_KEY")
     FORGOT_PASSWORD_TEMPLATE:str = os.getenv("FORGOT_PASSWORD_TEMPLATE")
+    SENDGRID_SENDER:EmailStr = os.getenv("SENDGRID_SENDER")
+    REPORT_POST_DELETE_TEMPLATE:str = os.getenv("REPORT_POST_DELETE_TEMPLATE")
+    REPORT_EMAIL_SENDER:EmailStr = os.getenv("REPORT_EMAIL_SENDER")
 
     OTP_EXPIRE_TIME:dict = ast.literal_eval(os.getenv("OTP_EXPIRE_TIME"))
 

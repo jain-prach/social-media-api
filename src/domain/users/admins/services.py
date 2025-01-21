@@ -19,11 +19,13 @@ class AdminService:
             select(Admin).where(Admin.base_user_id == base_user_id)
         ).first()
 
-    def create_admin(self, admin: CreateAdmin) -> Admin:
+    def create(self, admin: CreateAdmin) -> Admin:
         """create admin in the database"""
-        return db_session_value_create(session=self.db_session, value=admin)
+        db_admin = Admin.model_validate(admin)
+        db_session_value_create(session=self.db_session, value=db_admin)
+        return db_admin
 
-    def delete_admin(self, admin: Admin) -> None:
+    def delete(self, admin: Admin) -> None:
         """delete admin from the database"""
         self.db_session.delete(admin)
         self.db_session.commit()
