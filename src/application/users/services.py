@@ -89,9 +89,9 @@ class BaseUserAppService:
         """get base user by id"""
         return self.base_user_service.get_base_user_by_id(id=id)
     
-    # def get_base_user_by_user_id(self, user_id: uuid.UUID) -> Optional[BaseUser]:
-    #     """get base user by user id"""
-    #     return self.base_user_service.get_base_user_by_user_id(user_id=user_id)
+    def get_base_user_by_user_id(self, user_id: uuid.UUID) -> Optional[BaseUser]:
+        """get base user by user id"""
+        return self.base_user_service.get_base_user_by_user_id(user_id=user_id)
 
     def get_all_base_users(self) -> List[BaseUser]:
         """returns list of all base users"""
@@ -167,7 +167,7 @@ class BaseUserAppService:
 
         # create celery task to delete otp from database after OTP_EXPIRE_TIME
         delete_otp.apply_async(
-            kwargs={"user_id": user.id},
+            kwargs={"base_user_id": user.id},
             eta=datetime.now(tz=get_default_timezone())
             + timedelta(**settings.OTP_EXPIRE_TIME),
         )

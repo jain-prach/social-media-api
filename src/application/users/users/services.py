@@ -35,6 +35,10 @@ class UserAppService:
     def get_all_users(self) -> List[User]:
         """get all users list"""
         return self.user_service.get_all_users()
+    
+    def get_all_public_users(self) -> List[User]:
+        """get all public users list"""
+        return self.user_service.get_all_public_users()
 
     def create_user(self, user: UserWithBaseUserId | UserWithProfile) -> User:
         """create user"""

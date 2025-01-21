@@ -14,7 +14,7 @@ class BaseUser(BaseModel, table=True):
     """
     :model: base user model for login and role management
     """
-    email: str = Field(unique=True, nullable=False)
+    email: str = Field(index=True, unique=True, nullable=False)
     password: Optional[str] = Field(default=None)
     role: Role = Field(default=Role.USER, sa_column=Column(Enum(Role)))
     is_active: Optional[bool] = Field(default=True, nullable=False)
@@ -27,6 +27,6 @@ class Otp(BaseModel, table=True):
     :model: otp model for otp management
     """
     otp:int = Field(default=generate_otp())
-    base_user_id: uuid.UUID = Field(foreign_key="baseuser.id", ondelete="CASCADE", unique=True)
+    base_user_id: uuid.UUID = Field(index=True, foreign_key="baseuser.id", ondelete="CASCADE", unique=True)
 
     base_user: "BaseUser" = Relationship(back_populates="otp")
