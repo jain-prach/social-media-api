@@ -62,5 +62,13 @@ class Config(BaseSettings):
     POST_PAGINATION_SIZE:int = int(os.getenv("POST_PAGINATION_SIZE"))
     POST_COUNT_TO_NOTIFY:int = int(os.getenv("POST_COUNT_TO_NOTIFY"))
 
+    STRIPE_API_KEY:str = os.getenv("STRIPE_API_KEY")
+    # STRIPE_WEBHOOK_SECRET:str = os.getenv("STRIPE_WEBHOOK_SECRET")
+    STRIPE_WEBHOOK_SECRET_CHECKOUT_SUCCESS:str = os.getenv("STRIPE_WEBHOOK_SECRET_CHECKOUT_SUCCESS")
+    STRIPE_PRODUCT_NAME:str = os.getenv("STRIPE_PRODUCT_NAME")
+    STRIPE_SUCCESS_URL:str = os.getenv("STRIPE_SUCCESS_URL")
+    STRIPE_CANCEL_URL:str = os.getenv("STRIPE_CANCEL_URL")
+
+
 
 settings = Config()

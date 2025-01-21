@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 
 from sqlmodel import Session
 
-from lib.fastapi.custom_enums import Role, FilterDates
+from lib.fastapi.custom_enums import Role, FilterDates, SubscriptionInterval, PriceModel
 from lib.fastapi.custom_exceptions import CustomValidationError, ForbiddenException
 from lib.fastapi.error_string import (
     get_incorrect_id,
@@ -117,3 +117,23 @@ def get_random_values_from_list(var_list:List, count:int) -> List:
     if len(var_list) < count:
         return var_list
     return random.choices(population=var_list, k=count)
+
+def get_price(subscription:SubscriptionInterval) -> int:
+    """get price based on interval"""
+    if subscription == SubscriptionInterval.DAILY:
+        price = PriceModel.DAILY
+    elif subscription == SubscriptionInterval.MONTHLY:
+        price = PriceModel.MONTHLY
+    else:
+        price = PriceModel.YEARLY
+    return price
+
+def get_payment_interval(price:PriceModel) -> dict:
+    """get payment interval using price"""
+    if price == PriceModel.DAILY:
+        interval = {"interval": "day", "count": 1}
+    elif price == PriceModel.MONTHLY:
+        interval = {"interval": "month", "count": 1}
+    else:
+        interval = {"interval":"year", "count": 1}
+    return interval

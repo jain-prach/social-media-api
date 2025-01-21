@@ -48,6 +48,7 @@ class BaseUserService:
         return db_base_user
 
     def delete(self, db_base_user: BaseUser) -> None:
+        """delete base user from the database"""
         self.db_session.delete(db_base_user)
         self.db_session.commit()
         # user.is_active = False

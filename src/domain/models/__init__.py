@@ -9,6 +9,9 @@ from ..posts.comments.models import Comments
 from ..posts.media.models import Media
 from ..posts.reported_posts.models import ReportPost
 
+from ..payments.subscription.models import Subscription
+from ..payments.transaction.models import Transaction
+
 __all__ = [
     "BaseUser",
     "Otp",
@@ -20,4 +23,6 @@ __all__ = [
     "Comments",
     "Media",
     "ReportPost",
+    "Subscription", 
+    "Transaction"
 ]
