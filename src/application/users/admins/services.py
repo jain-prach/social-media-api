@@ -18,11 +18,17 @@ class AdminAppService:
 
     def create_admin(self, admin:CreateAdmin) -> Admin:
         """create admin"""
-        return self.admin_service.create_admin(admin=admin)
+        return self.admin_service.create(admin=admin)
     
     def delete_admin(self, base_user_id:uuid.UUID) -> None:
         admin = self.get_admin_by_base_user_id(id=base_user_id)
         if not admin:
             return None
-        self.admin_service.delete_admin(admin=admin)
+        self.admin_service.delete(admin=admin)
         return None
+    
+    def create_admin_directly(self, base_user_id:uuid.UUID) -> Admin:
+        """create admin when base_user is created"""
+        admin = CreateAdmin(base_user_id=base_user_id)
+        db_admin = self.create_admin(admin=admin)
+        return db_admin

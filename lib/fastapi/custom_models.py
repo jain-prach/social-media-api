@@ -6,6 +6,7 @@ from sqlmodel import SQLModel, Field
 
 from .utils import get_default_timezone
 
+
 class BaseModel(SQLModel, table=False):
     """
     :model: custom base model to inherit to create new models in this codebase
@@ -16,8 +17,13 @@ class BaseModel(SQLModel, table=False):
         :modified_at: null at the time of model field creation
     """
 
-    id:uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    created_at:datetime = Field(
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(
         default_factory=lambda: datetime.now(tz=get_default_timezone()), nullable=False
     )
-    modified_at: Optional[datetime] = Field(default=None, nullable=True)
+    modified_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(tz=get_default_timezone()),
+        sa_column_kwargs={
+            "onupdate": lambda: datetime.now(tz=get_default_timezone()),
+        },
+    )

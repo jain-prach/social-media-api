@@ -8,7 +8,6 @@ from fastapi.exceptions import HTTPException
 from starlette.status import HTTP_401_UNAUTHORIZED
 
 from src.application.users.services import JWTService
-from lib.fastapi.custom_exceptions import NotFoundException
 from lib.fastapi.error_string import get_access_token_expired
 
 
@@ -39,7 +38,10 @@ class CustomHTTPBearer(HTTPBearer):
         token = HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
         payload = JWTService().decode(token.credentials)
         if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
-            raise NotFoundException(get_access_token_expired())
+            raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED,
+                    detail=get_access_token_expired(),
+                )
         return payload
 
 

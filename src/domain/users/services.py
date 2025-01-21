@@ -23,6 +23,10 @@ class BaseUserService:
         """get base user from the database by id returns None if id doesn't exist"""
         return self.db_session.get(BaseUser, id)
     
+    # def get_base_user_by_user_id(self, user_id:uuid.UUID) -> Optional[BaseUser]:
+    #     """get base user from the database using user_id"""
+    #     return self.db_session.scalars(select(BaseUser).join(User).filter(User.id == user_id).first())
+    
     def get_all_base_users(self) -> List[BaseUser]:
         """returns list of all base users from the database"""
         users = self.db_session.exec(select(BaseUser)).all()

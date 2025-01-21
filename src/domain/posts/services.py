@@ -38,19 +38,19 @@ class PostService:
     #     """get post by post id that is posted by the user from the database"""
     #     return self.db_session.scalars(select(Post).where(Post.posted_by == user_id).where(Post.id == post_id))
 
-    def create_post(self, post: PostSchema) -> Post:
+    def create(self, post: PostSchema) -> Post:
         """create post in the database"""
         db_post = Post.model_validate(post)
         db_session_value_create(session=self.db_session, value=db_post)
         return db_post
 
-    def update_post(self, post: PostSchema, db_post: Post) -> Post:
+    def update(self, post: PostSchema, db_post: Post) -> Post:
         """update post in the database"""
         db_post.sqlmodel_update(post)
         db_session_value_create(session=self.db_session, value=db_post)
         return db_post
 
-    def delete_post(self, db_post: Post) -> None:
+    def delete(self, db_post: Post) -> None:
         """delete post from the database"""
         self.db_session.delete(db_post)
         self.db_session.commit()

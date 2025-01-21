@@ -4,12 +4,12 @@ import uuid
 from pydantic import BaseModel
 
 from lib.fastapi.custom_enums import StatusType
-from lib.fastapi.custom_schemas import BaseResponseSchema
+from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
 from src.interface.users.users.schemas import UserResponse
 
 
-class SendRequestSchema(BaseModel):
-    """send request to user"""
+class FollowRequestSchema(BaseModel):
+    """get user by username for follow request operations"""
 
     username: str
 
@@ -31,7 +31,7 @@ class FollowRequestSentResponseData(BaseResponseSchema):
 class FollowRequestReceivedResponse(BaseModel):
     """Follow Request received response schema"""
 
-    id: uuid.UUID
+    # id: uuid.UUID
     follower: UserResponse
     # following: UserResponse
     status: StatusType
@@ -48,27 +48,34 @@ class FollowRequestListSentResponseData(BaseResponseSchema):
 
     data: List[FollowRequestSentResponse]
 
-class FollowRequestAcceptedResponseData(BaseResponseSchema):
-    """Follow Request Accepted Response data with data attribute set to optional static string"""
+class FollowRequest(BaseModel):
+    """schema for database to create follow request"""
+
+    follower_id: uuid.UUID
+    following_id: uuid.UUID
+    status: StatusType
+
+class FollowRequestAcceptedResponseData(BaseResponseNoDataSchema):
+    """Follow Request Accepted Response data with message attribute set to optional static string"""
     
-    data: Optional[str] = "Request Accepted!!"
+    message: Optional[str] = "Request Accepted!!"
 
-class FollowRequestRejectedResponseData(BaseResponseSchema):
-    """Follow Request Rejected Response data with data attribute set to optional static string"""
+class FollowRequestRejectedResponseData(BaseResponseNoDataSchema):
+    """Follow Request Rejected Response data with message attribute set to optional static string"""
     
-    data: Optional[str] = "Request Rejected!!"
+    message: Optional[str] = "Request Rejected!!"
 
-class FollowRequestCancelledResponseData(BaseResponseSchema):
-    """Follow Request Cancelled Response data with data attribute set to optional static string"""
+class FollowRequestCancelledResponseData(BaseResponseNoDataSchema):
+    """Follow Request Cancelled Response data with message attribute set to optional static string"""
     
-    data: Optional[str] = "Request Cancelled!!"
+    message: Optional[str] = "Request Cancelled!!"
 
-class UnfollowUserResponseData(BaseResponseSchema):
-    """Unfollow User Response data with data attribute set to optional static string"""
+class UnfollowResponseData(BaseResponseNoDataSchema):
+    """Unfollow Response data with message attribute set to optional static string"""
 
-    data: Optional[str] = "User Unfollowed!!"
+    message: Optional[str] = "User Unfollowed!!"
 
-class RemoveFollowerResponseData(BaseResponseSchema):
-    """Remove Follower Response data with data attribute set to optional static string"""
+class RemoveFollowerResponseData(BaseResponseNoDataSchema):
+    """Remove Follower Response data with message attribute set to optional static string"""
 
-    data: Optional[str] = "Follower Removed!!"
+    message: Optional[str] = "Follower Removed!!"

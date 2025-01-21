@@ -105,7 +105,7 @@ class Boto3Service:
             url = self.__client.generate_presigned_url(
                 ClientMethod="get_object",
                 Params={"Bucket": self.bucket_name, "Key": object_key},
-                ExpiresIn=timedelta(settings.PRESIGNED_URL_TIME).total_seconds(),
+                ExpiresIn=timedelta(**settings.PRESIGNED_URL_TIME).total_seconds(),
             )
             return url
         except ClientError as e:

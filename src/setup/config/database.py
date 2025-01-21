@@ -1,4 +1,5 @@
 from typing import Annotated
+
 from fastapi import Depends
 
 from sqlmodel import Session, create_engine
@@ -15,3 +16,8 @@ def get_session():
         yield session
 
 SessionDep = Annotated[Session, Depends(get_session)]
+
+# @event.listens_for(BaseModel, "after_update")
+# def update_modified_at(mapper, connection, target):
+#     print("***", target)
+#     target.modified_at = datetime.now(tz=get_default_timezone())

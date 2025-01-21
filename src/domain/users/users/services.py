@@ -34,13 +34,13 @@ class UserService:
         """get all users from the database"""
         return self.db_session.exec(select(User)).all()
 
-    def create_user(self, user: UserWithBaseUserId | UserWithProfile) -> User:
+    def create(self, user: UserWithBaseUserId | UserWithProfile) -> User:
         """create user in the database"""
         db_user = User.model_validate(user)
         db_session_value_create(session=self.db_session, value=db_user)
         return db_user
 
-    def update_user(
+    def update(
         self, user: UserWithBaseUserId | UserWithProfile, db_user: User
     ) -> User:
         """update user in the database"""
@@ -48,7 +48,7 @@ class UserService:
         db_session_value_create(session=self.db_session, value=db_user)
         return db_user
 
-    def delete_user(self, user: User) -> None:
+    def delete(self, user: User) -> None:
         """delete user in the database"""
         self.db_session.delete(user)
         self.db_session.commit()

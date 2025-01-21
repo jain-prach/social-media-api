@@ -1,3 +1,6 @@
+import uuid
+from typing import Optional
+
 from sqlmodel import Session
 
 from .models import Comments
@@ -8,14 +11,18 @@ class CommentService:
     """handle comment database operations"""
     def __init__(self, session:Session):
         self.db_session = session
+
+    def get_comment_by_comment_id(self, id:uuid.UUID) -> Optional[Comments]:
+        """get comment by comment id"""
+        return self.db_session.get(Comments, id)
     
-    def create_comment(self, comment:CommentPost) -> Comments:
+    def create(self, comment:CommentPost) -> Comments:
         """create comment on post"""
         db_comment = Comments.model_validate(comment)
         db_session_value_create(session=self.db_session, value=db_comment)
         return db_comment
 
-    def delete_comment(self, db_comment:Comments) -> None:
+    def delete(self, db_comment:Comments) -> None:
         """delete comment from the post"""
         self.db_session.delete(db_comment)
         self.db_session.commit()
