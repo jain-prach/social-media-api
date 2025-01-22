@@ -54,31 +54,31 @@ def login(user: Login, session: SessionDep):
 
 
 @router.post(
-    "/forgot-password",
+    "/forgot-password/",
     status_code=HTTP_200_OK,
     response_model=ForgotPasswordResponseData
 )
-def forgot_password(user_email: ForgotPassword, session: SessionDep):
+def forgot_password(user: ForgotPassword, session: SessionDep):
     """forgot password for existing base user email"""
     base_user_app_service = BaseUserAppService(session)
-    base_user_app_service.forgot_password(email=user_email.email)
+    base_user_app_service.forgot_password(email=user.email)
     return {}
 
 
 @router.post(
-    "/verify-otp",
+    "/verify-otp/",
     status_code=HTTP_200_OK,
     response_model=VerifyOtpResponseData
 )
 def verify_otp(data: VerifyOtp, session: SessionDep):
     """verify otp and return otp token if verified"""
     base_user_app_service = BaseUserAppService(session)
-    otp_token = base_user_app_service.verify_otp(otp=data.otp, user_id=data.user_id)
+    otp_token = base_user_app_service.verify_otp(otp=data.otp, email=data.email)
     return {"data": dict(otp_token=otp_token)}
 
 
 @router.post(
-    "/reset-password",
+    "/reset-password/",
     status_code=HTTP_200_OK,
     response_model=ResetPasswordResponseData
 )
