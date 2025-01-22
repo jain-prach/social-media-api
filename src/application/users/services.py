@@ -25,6 +25,7 @@ from lib.fastapi.error_string import (
     get_expired_otp,
     get_git_email_not_found,
     get_otp_link_expired,
+    get_invalid_otp_token
 )
 from lib.fastapi.custom_enums import Role
 from src.setup.config.settings import settings
@@ -150,7 +151,7 @@ class BaseUserAppService:
 
     def create_otp(self, user_id: uuid.UUID) -> Otp:
         """create otp for user"""
-        return OtpService(session=self.db_session).create(user_id=user_id)
+        return OtpService(session=self.db_session).create(base_user_id=user_id)
 
     def forgot_password(self, email: str) -> None:
         """send email with otp for password forget"""
@@ -191,7 +192,7 @@ class BaseUserAppService:
         if otp_obj:
             if otp_obj.otp == otp:
                 return self.create_jwt_token_for_otp(
-                    otp=otp_obj.otp, base_user_id=base_user.id
+                    otp=otp_obj.otp, base_user_id=str(base_user.id)
                 )
             raise UnauthorizedException(get_invalid_otp())
         else:
@@ -208,6 +209,8 @@ class BaseUserAppService:
     def reset_password(self, otp_token: str, new_password: str) -> BaseUser:
         """reset password using otp_token"""
         payload = JWTService().decode(token=otp_token)
+        if not payload.get("id") or not payload.get("otp") or not payload.get("exp"):
+            raise UnauthorizedException(get_invalid_otp_token())
         if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
             raise NotFoundException(get_otp_link_expired())
         base_user_id = payload.get("id")

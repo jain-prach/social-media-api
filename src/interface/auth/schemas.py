@@ -47,13 +47,13 @@ class VerifyOtp(BaseModel):
     """verify otp schema, also verifies whether otp is of 4 digits"""
 
     otp: int
-    user_id: uuid.UUID
+    email: EmailStr
 
     @field_validator("otp", mode="after")
     @classmethod
     def valid_otp(cls, otp: int) -> str:
-        if not otp > 1000 and not otp < 9999:
-            raise ValueError("Otp must be of 4 digit!")
+        if not otp > 100000 and not otp < 999999:
+            raise ValueError("Otp must be of 6 digit!")
         return otp
 
 

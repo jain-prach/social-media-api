@@ -39,6 +39,9 @@ def get_git_email_not_found() -> str:
 def get_otp_link_expired() -> str:
     return "Otp link expired! Generate new."
 
+def get_invalid_otp_token() -> str:
+    return "Otp token invalid!"
+
 
 def get_incorrect_id() -> str:
     return "Please provide a correct id value."
