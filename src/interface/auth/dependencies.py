@@ -37,6 +37,8 @@ class CustomHTTPBearer(HTTPBearer):
                 return None
         token = HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
         payload = JWTService().decode(token.credentials)
+        if not payload.get("id") or not payload.get("role") or not payload.get("exp"):
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
         if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
             raise HTTPException(
                     status_code=HTTP_401_UNAUTHORIZED,
