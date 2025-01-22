@@ -9,6 +9,7 @@ from src.interface.auth.dependencies import AuthDep
 from lib.fastapi.utils import check_id, check_file_type, get_valid_post_formats_list
 from lib.fastapi.custom_enums import FilterDates
 from src.application.posts.services import PostAppService
+from src.application.payments.subscription.services import SubscriptionAppService
 from .schemas import (
     PostSchema,
     PostResponseData,
@@ -98,3 +99,33 @@ def delete_post(current_user: AuthDep, id: str, session: SessionDep):
     post_app_service = PostAppService(session=session)
     post_app_service.delete_post_by_user(post_id=post_id, user_id=user.id)
     return {}
+
+@router.post("/ad/", status_code=HTTP_201_CREATED, response_model=PostResponseData)
+def create_ad(
+    current_user: AuthDep,
+    session: SessionDep,
+    caption: Optional[str] = Form(None),
+    media: List[UploadFile] = File(...),
+):
+    """create post created by current user"""
+
+    user = check_permission_to_post(current_user=current_user, session=session)
+    subscription_app_service = SubscriptionAppService(session=session)
+    subscription_app_service.check_if_user_paid(user=user)
+    for file in media:
+        # check file type
+        check_file_type(
+            content_type=file.content_type, valid_types=get_valid_post_formats_list()
+        )
+
+    # create post
+    post = PostSchema(posted_by=user.id, caption=caption)
+    post_app_service = PostAppService(session=session)
+    db_post = post_app_service.create_post(post=post)
+    post_id = db_post.id
+    # handle media file upload for posts
+    handle_media_file_upload(
+        user_id=user.id, post_id=post_id, media=media, session=session
+    )
+    db_post = post_app_service.get_post_by_id(id=post_id)
+    return dict(data=db_post)

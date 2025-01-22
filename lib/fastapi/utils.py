@@ -128,8 +128,9 @@ def get_price(subscription:SubscriptionInterval) -> int:
         price = PriceModel.YEARLY
     return price
 
-def get_payment_interval(price:PriceModel) -> dict:
-    """get payment interval using price"""
+def get_payment_interval(subscription:SubscriptionInterval) -> dict:
+    """get payment interval for the subscribed payment"""
+    price = get_price(subscription=subscription)
     if price == PriceModel.DAILY:
         interval = {"interval": "day", "count": 1}
     elif price == PriceModel.MONTHLY:
@@ -137,3 +138,16 @@ def get_payment_interval(price:PriceModel) -> dict:
     else:
         interval = {"interval":"year", "count": 1}
     return interval
+
+# def get_payment_access_time(subscription:SubscriptionInterval) -> datetime:
+#     """get access time for the subscribed payment"""
+#     price = get_price(subscription=subscription)
+#     interval = get_payment_interval(price=price)
+#     now = datetime.now(tz=get_default_timezone())
+#     if interval["interval"] == "year":
+#         access_time = now + relativedelta(years=1)
+#     elif interval["interval"] == "month":
+#         access_time = now + relativedelta(months=1)
+#     else:
+#         access_time = now + relativedelta(days=1)
+#     return access_time

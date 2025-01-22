@@ -11,6 +11,7 @@ from src.interface.posts.router import router as post_router
 from src.interface.posts.likes.router import router as likes_router
 from src.interface.posts.comments.router import router as comments_router
 from src.interface.posts.reported_posts.router import router as report_post_router
+from src.interface.payments.subscription.router import router as subscription_router
 from lib.fastapi.custom_middlewares import HandleExceptionMiddleware
 
 disable_installed_extensions_check()
@@ -27,6 +28,7 @@ app.include_router(post_router)
 app.include_router(likes_router)
 app.include_router(comments_router)
 app.include_router(report_post_router)
+app.include_router(subscription_router)
 
 def custom_openapi():
     if app.openapi_schema:
