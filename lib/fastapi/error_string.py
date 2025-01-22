@@ -94,3 +94,12 @@ def get_post_reported_once() -> str:
 
 def get_user_is_private() -> str:
     return "This is an private user. You must follow to access their contents."
+
+def get_subscription_already_created() -> str:
+    return "Subscription already exists, we suggest you to update!"
+
+def get_transaction_not_created() -> str:
+    return "Transaction not found!"
+
+def get_user_not_subscribed() -> str:
+    return "Please subscribe to access this url!"

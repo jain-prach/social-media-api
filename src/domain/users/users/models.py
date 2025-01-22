@@ -6,8 +6,7 @@ from lib.fastapi.custom_models import BaseModel
 from lib.fastapi.custom_enums import ProfileType
 
 if TYPE_CHECKING:
-    from src.domain.models import BaseUser
-    from src.domain.models import FollowersModel
+    from src.domain.models import BaseUser, FollowersModel, Subscription, Transaction
 
 
 class User(BaseModel, table=True):
@@ -15,7 +14,9 @@ class User(BaseModel, table=True):
     :model: for regular user management (app users without admin rights)
     """
 
-    base_user_id: uuid.UUID = Field(index=True, foreign_key="baseuser.id", ondelete="CASCADE")
+    base_user_id: uuid.UUID = Field(
+        index=True, foreign_key="baseuser.id", ondelete="CASCADE"
+    )
     username: str = Field(index=True, unique=True, nullable=False)
     bio: str = Field(default=None, nullable=True)
     profile: Optional[str] = Field(default=None, nullable=True)
@@ -27,7 +28,6 @@ class User(BaseModel, table=True):
     base_user: "BaseUser" = Relationship(
         sa_relationship_kwargs={"uselist": False}, back_populates="user"
     )
-    
     followers: List["FollowersModel"] = Relationship(
         back_populates="following",
         cascade_delete=True,
@@ -35,11 +35,14 @@ class User(BaseModel, table=True):
             "primaryjoin": "User.id == FollowersModel.following_id"
         },
     )
-    
     following: List["FollowersModel"] = Relationship(
         back_populates="follower",
         cascade_delete=True,
-        sa_relationship_kwargs={
-            "primaryjoin": "User.id == FollowersModel.follower_id"
-        },
+        sa_relationship_kwargs={"primaryjoin": "User.id == FollowersModel.follower_id"},
+    )
+    subscription: Optional["Subscription"] = Relationship(
+        back_populates="user", cascade_delete=True
+    )
+    transaction: Optional["Transaction"] = Relationship(
+        back_populates="user", cascade_delete=True
     )
