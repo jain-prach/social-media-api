@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from sqlmodel import Session, create_engine, SQLModel
 
+# from src.domain.models import BaseUser
 from src.setup.app_factory import app
 from src.setup.config.settings import settings
 from src.setup.config.database import get_session
@@ -20,6 +21,7 @@ def override_get_session():
 def setup_database():
     SQLModel.metadata.create_all(test_engine)
     db = list(override_get_session())[0]
+    # print("************",db.exec(select(BaseUser)).all())
     db.rollback()
     yield db
     db.close()

@@ -8,8 +8,8 @@ from lib.fastapi.custom_enums import Role
 from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
 from lib.fastapi.error_string import get_password_value_error
 from src.setup.config.settings import settings
-from src.interface.users.users.schemas import UserResponse, UserWithBaseUserId
-from src.interface.users.admins.schemas import AdminResponse, CreateAdmin
+from src.interface.users.users.schemas import UserResponse
+from src.interface.users.admins.schemas import AdminResponse
 
 
 class BaseUserSchema(BaseModel):

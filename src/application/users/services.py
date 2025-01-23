@@ -152,6 +152,14 @@ class BaseUserAppService:
     def create_otp(self, user_id: uuid.UUID) -> Otp:
         """create otp for user"""
         return OtpService(session=self.db_session).create(base_user_id=user_id)
+    
+    def delete_otp(self, user:BaseUser) -> None:
+        """delete otp created for user"""
+        otp_obj = user.otp
+        if otp_obj:
+            otp_service = OtpService(session=self.db_session)
+            otp_service.delete(otp=otp_obj)
+        return None
 
     def forgot_password(self, email: str) -> None:
         """send email with otp for password forget"""
@@ -160,9 +168,7 @@ class BaseUserAppService:
             return None
 
         # delete otp if already exists and create new
-        otp_obj = user.otp
-        if otp_obj:
-            OtpService(session=self.db_session).delete(otp=otp_obj)
+        self.delete_otp(user=user)
 
         otp = self.create_otp(user_id=user.id)
 
@@ -198,12 +204,12 @@ class BaseUserAppService:
         else:
             raise NotFoundException(get_expired_otp())
 
-    def set_new_password(self, user_id: uuid.UUID, new_password: str) -> BaseUser:
+    def set_new_password(self, user: BaseUser, new_password: str) -> BaseUser:
         """set new password for the given user"""
-        user = self.get_base_user_by_id(id=user_id)
         db_user = user
         user.password = PasswordService().get_hashed_password(new_password)
         self.base_user_service.update(base_user=user, db_base_user=db_user)
+        self.delete_otp(user=user)
         return user
 
     def reset_password(self, otp_token: str, new_password: str) -> BaseUser:
@@ -214,7 +220,10 @@ class BaseUserAppService:
         if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
             raise NotFoundException(get_otp_link_expired())
         base_user_id = payload.get("id")
-        return self.set_new_password(user_id=base_user_id, new_password=new_password)
+        user = self.get_base_user_by_id(id=base_user_id)
+        if user.otp is None:
+            raise NotFoundException(get_otp_link_expired())
+        return self.set_new_password(user=user, new_password=new_password)
 
     @staticmethod
     def get_git_auth_url() -> str:

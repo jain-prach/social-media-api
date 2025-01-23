@@ -1,55 +1,61 @@
 from faker import Faker
 
-from lib.fastapi.custom_enums import Role
+from lib.fastapi.custom_enums import Role, ProfileType
 
 fake = Faker()
 
-create_admin = {
-    "email": fake.email(),
-    "role": Role.ADMIN,
-    "password": "Practice@123",
-}
+def create_admin():
+    return {
+        "email": fake.email(),
+        "role": Role.ADMIN,
+        "password": "Practice@123",
+    }
 
-create_user = {
-    "email": fake.email(),
-    "role": Role.USER,
-    "password": "Practice@123",
-}
+def create_user():
+    return {
+        "email": fake.email(),
+        "role": Role.USER,
+        "password": "Practice@123",
+    }
 
-created_admin_login = {
-    "email": create_admin["email"],
-    "password": create_admin["password"],
-}
-created_user_login = {
-    "email": create_user["email"],
-    "password": create_user["password"],
-}
-created_user_login_invalid_password = {
-    "email": create_user["email"],
-    "password": "invalid",
-}
+def created_user(email:str):
+    return {
+        "email": email,
+        "password": "Practice@123"
+    }
+
+def created_user_login_invalid_password(email):
+    return {
+        "email": email,
+        "password": "invalid",
+    }
+
 invalid_login = {"email": fake.email(), "password": "invalid"}
 
-admin_registration_correct_data = {
-    "email": fake.email(),
-    "role": Role.ADMIN,
-    "password": "Practice@123",
-}
+def admin_registration_wrong_email():
+    return {
+        "email": "invalid",
+        "role": Role.ADMIN,
+        "password": "Practice@123",
+    }
 
-admin_registration_wrong_email = {
-    "email": "invalid",
-    "role": Role.ADMIN,
-    "password": "Practice@123",
-}
+def user_registration_wrong_email():
+    return {
+        "email": "invalid",
+        "role": Role.USER,
+        "password": "Practice@123",
+    }
 
-user_registration_correct_data = {
-    "email": fake.email(),
-    "role": Role.USER,
-    "password": "Practice@123",
-}
+def create_public_user():
+    return {
+        "username": fake.user_name(),
+        "bio": fake.text(max_nb_chars=20),
+        "profile_type": ProfileType.PUBLIC,
+    }
 
-user_registration_wrong_email = {
-    "email": "invalid",
-    "role": Role.USER,
-    "password": "Practice@123",
-}
+def create_private_user():
+    return {
+        "username": fake.user_name(),
+        "bio": fake.text(max_nb_chars=20),
+        "profile_type": ProfileType.PRIVATE,
+    }

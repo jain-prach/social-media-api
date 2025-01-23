@@ -12,7 +12,7 @@ class CommentService:
     def __init__(self, session:Session):
         self.db_session = session
 
-    def get_comment_by_comment_id(self, id:uuid.UUID) -> Optional[Comments]:
+    def get_comment_by_id(self, id:uuid.UUID) -> Optional[Comments]:
         """get comment by comment id"""
         return self.db_session.get(Comments, id)
     

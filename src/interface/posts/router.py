@@ -34,10 +34,9 @@ def list_post(
     filter_by: Optional[FilterDates] = None,
 ):
     """list all posts by username, admin has permission to access all private and public account posts"""
-    current_user_id = check_id(id=current_user.get("id"))
     post_app_service = PostAppService(session=session)
     posts = post_app_service.get_all_posts_by_username(
-        current_user_id=current_user_id,
+        current_user=current_user,
         username=username,
         search=search,
         filter_by=filter_by,

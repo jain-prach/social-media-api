@@ -64,7 +64,7 @@ def list_followers(current_user: AuthDep, user: FollowRequestSchema, session: Se
     """list all followers of the user"""
     follow_app_service = FollowAppService(session=session)
     followers = follow_app_service.get_followers(
-        current_user_id=check_id(id=current_user.get("id")), username=user.username
+        current_user=current_user, username=user.username
     )
     return dict(data=followers)
 
@@ -76,7 +76,7 @@ def list_following(current_user: AuthDep, user: FollowRequestSchema, session: Se
     """list all users that the user follows"""
     follow_app_service = FollowAppService(session=session)
     following_list = follow_app_service.get_following(
-        current_user_id=check_id(id=current_user.get("id")), username=user.username
+        current_user=current_user, username=user.username
     )
     return dict(data=following_list)
 

@@ -13,6 +13,6 @@ class Comments(BaseModel, table=True):
 
     commented_by: uuid.UUID = Field(foreign_key="user.id", ondelete="CASCADE")
     post_id: uuid.UUID = Field(foreign_key="post.id", ondelete="CASCADE")
-    comment:str = Field(min_length=10, max_length=300)
+    comment:str = Field(min_length=1, max_length=300)
     
     post: 'Post' = Relationship(back_populates="comments")

@@ -30,7 +30,7 @@ class Boto3Service:
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_KEY_ID,
             verify=False,
-            region_name=settings.AWS_S3_REGION_NAME,
+            # region_name=settings.AWS_S3_REGION_NAME,
         )
         self.bucket_name = settings.AWS_BUCKET_NAME
 

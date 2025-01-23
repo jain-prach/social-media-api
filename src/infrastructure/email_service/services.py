@@ -14,6 +14,7 @@ class EmailDict(TypedDict):
 
 class SendgridService:
     """send email using sendgrid"""
+
     def __new__(cls):
         if not settings.SENDGRID_API_KEY:
             raise Exception("Error: Sendgrid API Key not found")
@@ -56,11 +57,12 @@ class SendgridService:
             sender - email of sender
             receivers: List[EmailDict] - email list of receiver(s)
             template_id: TemplateId - dynamic template's id
-            template_dict: dict - context to pass with the template
+            template_dict: Optional[dict] - context to pass with the template
         """
         to_emails = self._create_receiver_email(receivers)
         mail = Mail(from_email=sender, to_emails=to_emails)
         if template_dict:
+            mail._personalizations = []
             for receiver in to_emails:
                 personalization = self._create_personalizations(receiver, template_dict)
                 mail.add_personalization(personalization)

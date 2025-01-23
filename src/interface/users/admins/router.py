@@ -53,7 +53,7 @@ router = APIRouter(
 
 
 @router.get("/me/", status_code=HTTP_200_OK, response_model=AdminResponseData)
-def get_user(
+def get_admin(
     current_user: AuthDep, session: SessionDep
 ):
     """get own admin details"""
@@ -67,8 +67,8 @@ def get_user(
 
 
 @router.delete("/{id}/", status_code=HTTP_200_OK, response_model=DeleteAdminResponseData)
-def delete_user(current_user: AuthDep, base_user_id: str, session: SessionDep):
-    """delete existing user"""
+def delete_admin(current_user: AuthDep, base_user_id: str, session: SessionDep):
+    """delete existing admin"""
     only_admin_access(current_user=current_user)
     id = check_id(id=base_user_id)
     only_own_access(current_user=current_user, access_id=id)
