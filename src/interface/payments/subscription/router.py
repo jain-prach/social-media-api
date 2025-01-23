@@ -58,7 +58,7 @@ def test(payment_id: str, session: SessionDep):
         SubscriptionSchema(
             transaction_id=transaction.id,
             user_id=transaction.user_id,
-            interval=SubscriptionInterval.MONTHLY,
+            interval=SubscriptionInterval.MONTHLY.value,
         )
     )
     return {**subscription.model_dump()}
