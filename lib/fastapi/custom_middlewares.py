@@ -3,7 +3,6 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
-    HTTP_422_UNPROCESSABLE_ENTITY,
 )
 from pydantic import ValidationError
 
@@ -16,7 +15,7 @@ from .custom_exceptions import (
     CustomValidationError,
     CustomUniqueConstraintError,
 )
-from .utils import get_pydantic_validation_error
+from .utils import get_pydantic_error_response
 
 
 class HandleExceptionMiddleware(BaseHTTPMiddleware):
@@ -30,14 +29,7 @@ class HandleExceptionMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         except ValidationError as e:
-            return JSONResponse(
-                status_code=HTTP_422_UNPROCESSABLE_ENTITY,
-                content={
-                    "message": get_pydantic_validation_error(errors=e.errors()),
-                    "success": False,
-                    "data": {},
-                },
-            )
+            return get_pydantic_error_response(e)
         except (
             UnauthorizedException,
             NotFoundException,
@@ -49,11 +41,11 @@ class HandleExceptionMiddleware(BaseHTTPMiddleware):
         ) as e:
             return JSONResponse(
                 status_code=e.status_code,
-                content={"message": e.detail, "success": False, "data": {}},
+                content={"message": e.detail, "success": False, "data": {"message": e.detail}},
             )
         except Exception as e:
             print("*****", e)
             return JSONResponse(
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"message": f"{e}", "success": False, "data": {}},
+                content={"message": f"{e}", "success": False, "data": {"message": str(e)}},
             )

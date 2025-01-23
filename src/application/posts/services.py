@@ -69,7 +69,7 @@ class PostAppService:
 
     def get_all_posts_by_username(
         self,
-        current_user_id: uuid.UUID,
+        current_user: dict,
         username: str,
         search: Optional[str],
         filter_by: Optional[FilterDates],
@@ -79,7 +79,7 @@ class PostAppService:
         user = user_app_service.get_user_by_username(username=username)
         if not user:
             raise NotFoundException(get_user_not_found())
-        user_app_service.check_private_user(current_user_id=current_user_id, user=user)
+        user_app_service.check_private_user(current_user=current_user, user=user)
         return self.post_service.get_all_posts_by_user_id(
             user_id=user.id, search=search, filter_by=filter_by
         )
@@ -139,6 +139,8 @@ class PostAppService:
         if not db_post:
             # return None
             raise NotFoundException(get_post_not_found())
+        # if db_post.report is None:
+        #     return BadRequestException(get_post_not_reported())
         # send email to post owners
         base_user_app_service = BaseUserAppService(session=self.db_session)
         base_user = base_user_app_service.get_base_user_by_user_id(
@@ -147,7 +149,7 @@ class PostAppService:
         if not base_user:
             raise NotFoundException(get_user_not_found())
         ReportedPostEmailService().send_email_for_reported_post(user=base_user)
-        self.delete_post(db_post)
+        self.delete_post(db_post=db_post)
 
     def get_posts_to_schedule(self, user_id: uuid.UUID) -> List[uuid.UUID]:
         """get randomly selected posts to schedule"""

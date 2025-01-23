@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi_pagination.utils import disable_installed_extensions_check
+from fastapi.exceptions import RequestValidationError
 
 from src.interface.auth.router import router as auth_router
 from src.interface.users.router import router as base_user_router
@@ -13,10 +14,16 @@ from src.interface.posts.comments.router import router as comments_router
 from src.interface.posts.reported_posts.router import router as report_post_router
 from src.interface.payments.subscription.router import router as subscription_router
 from lib.fastapi.custom_middlewares import HandleExceptionMiddleware
+from lib.fastapi.utils import get_pydantic_error_response
 
 disable_installed_extensions_check()
 
 app = FastAPI()
+
+def pydantic_exception_handler(request: Request, exc: RequestValidationError):
+    return get_pydantic_error_response(e=exc)
+
+app.add_exception_handler(exc_class_or_status_code=RequestValidationError, handler=pydantic_exception_handler)
 
 app.add_middleware(HandleExceptionMiddleware)
 app.include_router(auth_router)

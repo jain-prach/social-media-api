@@ -18,8 +18,8 @@ from lib.fastapi.utils import (
     get_price,
     check_id,
 )
-from lib.fastapi.custom_exceptions import BadRequestException
-from lib.fastapi.error_string import get_subscription_already_created, get_user_not_subscribed
+from lib.fastapi.custom_exceptions import BadRequestException, NotFoundException
+from lib.fastapi.error_string import get_subscription_already_created, get_user_not_subscribed, get_user_not_found
 from src.infrastructure.payment_service.services import StripeService
 from src.setup.config.settings import settings
 
@@ -47,6 +47,8 @@ class SubscriptionAppService:
         price = get_price(subscription=subscription)
         payment_interval = get_payment_interval(subscription=subscription)
         metadata = {"user_id": user.id, "interval": subscription}
+        #CHECK HERE
+        print(isinstance(metadata["interval"], SubscriptionInterval))
         checkout = StripeService().create_subscription_checkout(
             price=price,
             payment_interval=payment_interval,
@@ -60,6 +62,8 @@ class SubscriptionAppService:
         """processing checkout information"""
         user_app_service = UserAppService(session=self.db_session)
         user = user_app_service.get_user_by_base_user_id(base_user_id=user_id)
+        if not user:
+            raise NotFoundException(get_user_not_found())
         if user.subscription:
             raise BadRequestException(get_subscription_already_created())
         checkout = self.create_checkout_for_subscription(
@@ -80,14 +84,14 @@ class SubscriptionAppService:
         """complete checkout when done"""
         event = StripeService.create_webhook_event(payload, stripe_signature)
         checkout_session = event.data.object
-        user_id = check_id(checkout_session["metadata"]["user_id"])
+        # user_id = check_id(checkout_session["metadata"]["user_id"])
         interval = checkout_session["metadata"]["interval"]
         transaction_app_service = TransactionAppService(session=self.db_session)
         db_transaction = transaction_app_service.update_transaction_status(
             payment_id=checkout_session["id"]
         )
         subscription = SubscriptionSchema(
-            transaction_id=db_transaction.id, user_id=user_id, interval=interval
+            transaction_id=db_transaction.id, user_id=db_transaction.user_id, interval=interval
         )
         return self.create_subscription(subscription=subscription)
 
