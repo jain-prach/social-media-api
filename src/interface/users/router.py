@@ -15,10 +15,10 @@ from lib.fastapi.error_string import get_user_not_found
 from lib.fastapi.utils import check_id, only_admin_access
 
 
-router = APIRouter(prefix="/base_user", tags=["base-user"], route_class=UniqueConstraintErrorRoute)
+router = APIRouter(prefix="/base-user", tags=["base-user"], route_class=UniqueConstraintErrorRoute)
 
 @router.get("s/", status_code=HTTP_200_OK, response_model=BaseUserListResponseData)
-def list_users(current_user:AuthDep, session:SessionDep):
+def list_base_users(current_user:AuthDep, session:SessionDep):
     """list all base users"""
     base_user_app_service = BaseUserAppService(session)
     if current_user.get("role") != Role.ADMIN.value:
@@ -32,7 +32,7 @@ def list_users(current_user:AuthDep, session:SessionDep):
     status_code=HTTP_200_OK,
     response_model=BaseUserResponseData,
 )
-def get_user(
+def get_base_user(
     current_user: AuthDep,
     data: Annotated[GetBaseUser, Depends(GetBaseUser)],
     session: SessionDep,
@@ -51,11 +51,12 @@ def get_user(
     }
 
 
-@router.get("/me", status_code=HTTP_200_OK, response_model=BaseUserResponseData)
-def get_own_user(current_user:AuthDep, session:SessionDep):
+@router.get("/get/me/", status_code=HTTP_200_OK, response_model=BaseUserResponseData)
+def get_own_details(current_user:AuthDep, session:SessionDep):
     """access own user details"""
-    id = current_user.get("id")
-    user = BaseUserAppService(session=session).get_base_user_by_id(id=id)
+    user_id = check_id(id=current_user.get("id"))
+    base_user_service = BaseUserAppService(session=session)
+    user = base_user_service.get_base_user_by_id(id=user_id)
     return {
         "message": "Own Details",
         "success": True,
@@ -88,7 +89,7 @@ def get_own_user(current_user:AuthDep, session:SessionDep):
 #     }
 
 @router.delete("/{id}/", status_code=HTTP_200_OK, response_model=DeleteBaseUserResponseData)
-def delete_user(current_user: AuthDep, id: str, session: SessionDep):
+def delete_base_user(current_user: AuthDep, id: str, session: SessionDep):
     """delete existing user"""
     id = check_id(id=id)
     only_admin_access(current_user=current_user)

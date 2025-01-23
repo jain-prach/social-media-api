@@ -76,24 +76,24 @@ class FollowAppService:
         ]
 
     def get_followers(
-        self, current_user_id: uuid.UUID, username: str
+        self, current_user: dict, username: str
     ) -> List[FollowersModel]:
         """get requests accepted by the user"""
         user = self.get_user_by_username(username=username)
         user_app_service = UserAppService(session=self.db_session)
-        user_app_service.check_private_user(current_user_id=current_user_id, user=user)
+        user_app_service.check_private_user(current_user=current_user, user=user)
         followers = self.get_all_followers(base_user_id=user.base_user_id)
         return [
             follower for follower in followers if follower.status == StatusType.APPROVED
         ]
 
     def get_following(
-        self, current_user_id: uuid.UUID, username: str
+        self, current_user: dict, username: str
     ) -> List[FollowersModel]:
         """get sent requests accepted for the user"""
         user = self.get_user_by_username(username=username)
         user_app_service = UserAppService(session=self.db_session)
-        user_app_service.check_private_user(current_user_id=current_user_id, user=user)
+        user_app_service.check_private_user(current_user=current_user, user=user)
         following_list = self.get_all_following_list(base_user_id=user.base_user_id)
         return [
             following
@@ -139,7 +139,7 @@ class FollowAppService:
         if not db_follow or db_follow.status != StatusType.PENDING:
             return None
         follow = FollowRequest(
-            follower_id=follower.id, user=user.id, status=StatusType.APPROVED
+            follower_id=follower.id, following_id=user.id, status=StatusType.APPROVED
         )
         return self.follow_service.update(follow=follow, db_follow=db_follow)
 
@@ -178,7 +178,7 @@ class FollowAppService:
         )
         if not db_follow or db_follow.status != StatusType.APPROVED:
             return None
-        return self.follow_service.delete(follow=db_follow)
+        return self.follow_service.delete(db_follow=db_follow)
 
     def remove_follower(self, base_user_id: uuid.UUID, remove_username: str) -> None:
         """remove follower"""

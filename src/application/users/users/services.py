@@ -12,6 +12,8 @@ from src.infrastructure.file_upload.services import Boto3Service
 from lib.fastapi.custom_enums import ProfileType, Role, StatusType
 from lib.fastapi.custom_exceptions import ForbiddenException, CustomValidationError
 from lib.fastapi.error_string import get_user_is_private, get_user_not_created
+from lib.fastapi.utils import check_id
+
 
 class UserAppService:
     """services for user model"""
@@ -35,7 +37,7 @@ class UserAppService:
     def get_all_users(self) -> List[User]:
         """get all users list"""
         return self.user_service.get_all_users()
-    
+
     def get_all_public_users(self) -> List[User]:
         """get all public users list"""
         return self.user_service.get_all_public_users()
@@ -44,17 +46,15 @@ class UserAppService:
         """create user"""
         return self.user_service.create(user=user)
 
-    def update_user(
-        self, user: UserWithBaseUserId | UserWithProfile
-    ) -> User:
+    def update_user(self, user: UserWithBaseUserId | UserWithProfile) -> User:
         """update user"""
         db_user = self.get_user_by_base_user_id(base_user_id=user.base_user_id)
         if not db_user:
             raise CustomValidationError(get_user_not_created())
         if user.profile_type == ProfileType.PUBLIC:
-            #get followers list with status type pending
+            # get followers list with status type pending
             followers = [follower for follower in db_user.followers]
-            #update all to status type approved
+            # update all to status type approved
             for follower in followers:
                 if follower.status == StatusType.PENDING:
                     follower.status = StatusType.APPROVED
@@ -67,15 +67,21 @@ class UserAppService:
         self.user_service.delete(user=user)
         return None
 
-    def check_private_user(self, current_user_id: uuid.UUID, user: User) -> None:
+    def check_private_user(self, current_user: dict, user: User) -> None:
         """check if user is private and whether current user follows the user"""
-        current_user = self.get_user_by_base_user_id(base_user_id=current_user_id)
-        if (
-            user.profile_type == ProfileType.PRIVATE
-        ) and current_user.base_user.role != Role.ADMIN:
-            followers_user_id = [follower.follower_id for follower in user.followers]
-            if current_user != user and current_user.id not in followers_user_id:
-                raise ForbiddenException(get_user_is_private())
+        if current_user["role"] != Role.ADMIN.value:
+            current_user_id = check_id(id=current_user.get("id"))
+            current_user = self.get_user_by_base_user_id(base_user_id=current_user_id)
+            if user.profile_type == ProfileType.PRIVATE:
+                followers_user_id = [
+                    follower.id
+                    for follower in user.followers
+                    if follower.status == StatusType.APPROVED
+                ]
+                if current_user == user:
+                    return None
+                if current_user.id not in followers_user_id:
+                    raise ForbiddenException(get_user_is_private())
 
     def create_dummy_user(self, base_user_id: uuid.UUID) -> User:
         """create dummy user when base_user is created"""

@@ -6,7 +6,11 @@ import re
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+from fastapi.responses import JSONResponse
 from sqlmodel import Session
+from pydantic import ValidationError
+from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
+
 
 from lib.fastapi.custom_enums import Role, FilterDates, SubscriptionInterval, PriceModel
 from lib.fastapi.custom_exceptions import CustomValidationError, ForbiddenException
@@ -101,6 +105,16 @@ def get_pydantic_validation_error(errors:List) -> List:
         error_dict = {"loc":error["loc"], "msg":error["msg"], "type":error["type"]}
         error_output.append(error_dict)
     return error_output
+
+def get_pydantic_error_response(e:ValidationError) -> JSONResponse:
+    return JSONResponse(
+                status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+                content={
+                    "message": "ValueError",
+                    "success": False,
+                    "data": {"message": get_pydantic_validation_error(errors=e.errors())},
+                },
+            )
 
 def get_random_values_from_list(var_list:List, count:int) -> List:
     """

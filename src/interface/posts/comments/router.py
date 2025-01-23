@@ -17,12 +17,13 @@ def comment_post(current_user:AuthDep, post_id:str, post:CommentPostSchema, sess
     user = check_permission_to_post(current_user=current_user, session=session)
     comment_app_service = CommentAppService(session=session)
     comment = CommentPost(commented_by=user.id, comment=post.comment, post_id=check_id(id=post_id))
-    comment_app_service.comment_post(comment=comment)
-    return {}
+    db_comment = comment_app_service.comment_post(comment=comment)
+    return {"data": db_comment}
 
 @router.delete("/", status_code=HTTP_200_OK, response_model=CommentDeleteResponseData)
 def delete_comment(current_user:AuthDep, comment_id:str, session:SessionDep):
     """delete comment using comment_id"""
+    comment_id=check_id(id=comment_id)
     user = check_permission_to_post(current_user=current_user, session=session)
     comment_app_service = CommentAppService(session=session)
     comment_app_service.remove_comment(commented_by=user.id, comment_id=comment_id)

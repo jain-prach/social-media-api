@@ -11,3 +11,6 @@ def create_value_using_session(session:Session, value):
     session.commit()
     session.refresh(value)
     return value
+
+def get_auth_header(token:str) -> dict:
+    return {'Authorization': f"Bearer {token}"}
