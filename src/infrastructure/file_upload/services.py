@@ -41,8 +41,8 @@ class Boto3Service:
         ]
         if bucket_name not in bucket_names:
             self.__client.create_bucket(Bucket=bucket_name)
-        else:
-            print(bucket_names)
+        # print(bucket_names)
+        return None
 
     def upload_file_from_source(
         self, object_key: str, source_file: str, content_type: str
@@ -65,6 +65,7 @@ class Boto3Service:
         """upload file using IO buffer"""
         try:
             self._create_bucket(self.bucket_name)
+            # print(object_key, file_content, file_type)
             self.__client.put_object(
                 Body=file_content,
                 Bucket=self.bucket_name,

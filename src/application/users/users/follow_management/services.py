@@ -6,11 +6,13 @@ from sqlmodel import Session
 from src.domain.models import FollowersModel, User
 from src.domain.users.users.follow_management.services import FollowService
 from src.application.users.users.services import UserAppService
-from lib.fastapi.custom_exceptions import NotFoundException, CustomValidationError
+from lib.fastapi.custom_exceptions import BadRequestException, CustomValidationError
 from lib.fastapi.error_string import (
     get_user_not_created,
     get_send_request_to_yourself,
     get_user_not_found,
+    get_accept_request_for_no_follower,
+    get_reject_request_for_no_follower
 )
 from lib.fastapi.custom_enums import StatusType, ProfileType
 from src.interface.users.users.follow_management.schemas import FollowRequest
@@ -28,21 +30,21 @@ class FollowAppService:
         return self.follow_service.get_follow_by_follow_id(id=id)
 
     def get_user_by_base_user_id(self, base_user_id: uuid.UUID) -> User:
-        """get user by base user id, raise NotFoundException if user not created"""
+        """get user by base user id, raise BadRequestException if user not created"""
         user = UserAppService(session=self.db_session).get_user_by_base_user_id(
             base_user_id=base_user_id
         )
         if not user:
-            raise NotFoundException(get_user_not_created())
+            raise BadRequestException(get_user_not_created())
         return user
 
     def get_user_by_username(self, username: str) -> User:
-        """get user by username, raise NotFoundException if user not created"""
+        """get user by username, raise BadRequestException if user not created"""
         user = UserAppService(session=self.db_session).get_user_by_username(
             username=username
         )
         if not user:
-            raise NotFoundException(get_user_not_found())
+            raise BadRequestException(get_user_not_found())
         return user
 
     def get_all_followers(self, base_user_id: uuid.UUID) -> List[FollowersModel]:
@@ -136,8 +138,8 @@ class FollowAppService:
         db_follow = self.follow_service.get_follow_for_follower_and_following(
             follower_id=follower.id, following_id=user.id
         )
-        if not db_follow or db_follow.status != StatusType.PENDING:
-            return None
+        if not db_follow or (db_follow.status != StatusType.PENDING):
+            raise BadRequestException(get_accept_request_for_no_follower())
         follow = FollowRequest(
             follower_id=follower.id, following_id=user.id, status=StatusType.APPROVED
         )
@@ -153,7 +155,7 @@ class FollowAppService:
             follower_id=rejected_user.id, following_id=user.id
         )
         if not db_follow or db_follow.status != StatusType.PENDING:
-            return None
+            raise BadRequestException(get_reject_request_for_no_follower())
         return self.follow_service.delete(db_follow=db_follow)
 
     def cancel_follow_request(

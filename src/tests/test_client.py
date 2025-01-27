@@ -3,6 +3,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from sqlmodel import Session, create_engine, SQLModel
+from sqlalchemy.orm.session import close_all_sessions
+
 
 # from src.domain.models import BaseUser
 from src.setup.app_factory import app
@@ -24,7 +26,8 @@ def setup_database():
     # print("************",db.exec(select(BaseUser)).all())
     db.rollback()
     yield db
-    db.close()
+    # db.close_all()
+    close_all_sessions()
     SQLModel.metadata.drop_all(test_engine)
 
 app.dependency_overrides[get_session] = override_get_session

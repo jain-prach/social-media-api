@@ -154,7 +154,7 @@ def unfollow(current_user: AuthDep, user: FollowRequestSchema, session: SessionD
 
 
 @router.post(
-    "/remove_follower/",
+    "/remove-follower/",
     status_code=HTTP_200_OK,
     response_model=RemoveFollowerResponseData,
 )
