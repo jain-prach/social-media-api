@@ -25,7 +25,7 @@ router = APIRouter(prefix="/post", tags=["posts"])
 
 
 @router.get("s/{username}/", status_code=HTTP_200_OK, response_model=PostListResponseData)
-def list_post(
+def list_posts(
     current_user: AuthDep,
     username: str,
     session: SessionDep,

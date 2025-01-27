@@ -58,6 +58,8 @@ class UserAppService:
             for follower in followers:
                 if follower.status == StatusType.PENDING:
                     follower.status = StatusType.APPROVED
+        # if user.profile:
+            #delete db_user profile (not needed because it will override)
         return self.user_service.update(user=user, db_user=db_user)
 
     def delete_user(self, base_user_id: uuid.UUID) -> None:
@@ -71,16 +73,19 @@ class UserAppService:
         """check if user is private and whether current user follows the user"""
         if current_user["role"] != Role.ADMIN.value:
             current_user_id = check_id(id=current_user.get("id"))
-            current_user = self.get_user_by_base_user_id(base_user_id=current_user_id)
+            db_user = self.get_user_by_base_user_id(base_user_id=current_user_id)
             if user.profile_type == ProfileType.PRIVATE:
                 followers_user_id = [
-                    follower.id
+                    follower.follower.id
                     for follower in user.followers
                     if follower.status == StatusType.APPROVED
                 ]
-                if current_user == user:
+                # print(user.followers)
+                # print(followers_user_id)
+                # print(db_user)
+                if db_user.id == user.id:
                     return None
-                if current_user.id not in followers_user_id:
+                if db_user.id not in followers_user_id:
                     raise ForbiddenException(get_user_is_private())
 
     def create_dummy_user(self, base_user_id: uuid.UUID) -> User:

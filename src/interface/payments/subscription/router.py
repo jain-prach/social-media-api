@@ -6,12 +6,12 @@ from src.setup.config.database import SessionDep
 from .schemas import (
     PaymentSuccessResponseData,
     PaymentCancelResponseData,
-    SubscriptionResponseData, SubscriptionSchema
+    SubscriptionResponseData
 )
 from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
 from lib.fastapi.custom_enums import SubscriptionInterval
 from src.application.payments.subscription.services import (
-    SubscriptionAppService, TransactionAppService
+    SubscriptionAppService
 )
 from lib.fastapi.utils import check_id, only_user_access
 
@@ -49,19 +49,19 @@ def cancel():
     return {}
 
 
-@router.get("/")
-def test(payment_id: str, session: SessionDep):
-    transaction = TransactionAppService(session=session).update_transaction_status(
-        payment_id=payment_id
-    )
-    subscription = SubscriptionAppService(session=session).create_subscription(
-        SubscriptionSchema(
-            transaction_id=transaction.id,
-            user_id=transaction.user_id,
-            interval=SubscriptionInterval.MONTHLY,
-        )
-    )
-    return {**subscription.model_dump()}
+# @router.get("/")
+# def test(payment_id: str, session: SessionDep):
+#     transaction = TransactionAppService(session=session).update_transaction_status(
+#         payment_id=payment_id
+#     )
+#     subscription = SubscriptionAppService(session=session).create_subscription(
+#         SubscriptionSchema(
+#             transaction_id=transaction.id,
+#             user_id=transaction.user_id,
+#             interval=SubscriptionInterval.MONTHLY.value,
+#         )
+#     )
+#     return {**subscription.model_dump()}
 
 
 @router.post("/webhook/checkout/success/", response_model=SubscriptionResponseData)

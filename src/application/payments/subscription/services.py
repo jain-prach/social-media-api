@@ -37,7 +37,7 @@ class SubscriptionAppService:
 
     def create_subscription(self, subscription: SubscriptionSchema) -> Subscription:
         """create subscription instance"""
-        self.subscription_service.create(subscription=subscription)
+        return self.subscription_service.create(subscription=subscription)
 
     @staticmethod
     def create_checkout_for_subscription(
@@ -46,9 +46,7 @@ class SubscriptionAppService:
         """create checkout for the user"""
         price = get_price(subscription=subscription)
         payment_interval = get_payment_interval(subscription=subscription)
-        metadata = {"user_id": user.id, "interval": subscription}
-        #CHECK HERE
-        print(isinstance(metadata["interval"], SubscriptionInterval))
+        metadata = {"user_id": user.id, "interval": subscription.value}
         checkout = StripeService().create_subscription_checkout(
             price=price,
             payment_interval=payment_interval,

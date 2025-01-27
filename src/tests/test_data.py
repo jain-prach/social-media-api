@@ -4,6 +4,9 @@ from lib.fastapi.custom_enums import Role, ProfileType
 
 fake = Faker()
 
+def get_username():
+    return fake.user_name()
+
 def create_admin():
     return {
         "email": fake.email(),
