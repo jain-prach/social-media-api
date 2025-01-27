@@ -118,10 +118,10 @@ class FollowAppService:
         return self.follow_service.create(follow=follow)
 
     def create_follow_request(
-        self, follower_id: uuid.UUID, username: str
+        self, follower_base_user_id: uuid.UUID, username: str
     ) -> FollowersModel:
         """create follower request"""
-        follower = self.get_user_by_base_user_id(base_user_id=follower_id)
+        follower = self.get_user_by_base_user_id(base_user_id=follower_base_user_id)
         user = self.get_user_by_username(username=username)
         if user.username == follower.username:
             raise CustomValidationError(get_send_request_to_yourself())

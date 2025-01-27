@@ -89,7 +89,7 @@ def send_request(current_user: AuthDep, user: FollowRequestSchema, session: Sess
     only_user_access(current_user=current_user)
     follow_app_service = FollowAppService(session=session)
     db_follow = follow_app_service.create_follow_request(
-        follower_id=check_id(current_user.get("id")), username=user.username
+        follower_base_user_id=check_id(current_user.get("id")), username=user.username
     )
     return dict(data=db_follow)
 

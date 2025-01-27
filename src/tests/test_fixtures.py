@@ -283,3 +283,12 @@ def before_create_public_user_with_following(before_create_normal_user, before_c
         before_create_approved_follow_requests(session=session, follower_id=user.id, following_id=user2.id)
         return username
     return create_public_user_with_following
+
+@pytest.fixture(scope="function")
+def before_create_follow(before_create_normal_user, before_create_approved_follow_requests):
+    def create_follow(session:Session):
+        user1=before_create_normal_user(session=session, user_dict=create_private_user())
+        user2=before_create_normal_user(session=session, user_dict=create_private_user())
+        db_follow = before_create_approved_follow_requests(session=session, follower_id=user1.id, following_id=user2.id)
+        return db_follow
+    return create_follow
