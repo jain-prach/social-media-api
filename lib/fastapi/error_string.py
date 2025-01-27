@@ -82,6 +82,12 @@ def get_admin_not_allowed() -> str:
 def get_send_request_to_yourself() -> str:
     return "A user cannot follow themselves"
 
+def get_accept_request_for_no_follower() -> str:
+    return "No follow request found to accept by this username"
+
+def get_reject_request_for_no_follower() -> str:
+    return "Not follow request found to reject by this username"
+
 def get_request_already_sent() -> str:
     return "Request already sent!"
 

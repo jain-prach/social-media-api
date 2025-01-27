@@ -101,8 +101,8 @@ def get_user(
 def update_user(
     current_user: AuthDep,
     session: SessionDep,
-    username: str = Form(...),
-    bio: str = Form(...),
+    username: Optional[str] = Form(None),
+    bio: Optional[str] = Form(None),
     profile_type: ProfileType = Form(ProfileType.PUBLIC),
     profile: Optional[UploadFile] = File(None),
 ):
@@ -113,18 +113,19 @@ def update_user(
     # if role != Role.ADMIN.value:
     #     only_own_access(current_user=current_user, id=user.base_user_id)
     only_user_access(current_user=current_user)
+    user_app_service = UserAppService(session=session)
+    db_user = user_app_service.get_user_by_base_user_id(base_user_id=check_id(id=current_user.get("id")))
 
     user = UserWithBaseUserId(
-        username=username,
-        bio=bio,
+        username=username if username else db_user.username,
+        bio=bio if bio else db_user.bio,
         profile_type=profile_type,
-        base_user_id=check_id(id=current_user.get("id")),
+        base_user_id=db_user.base_user_id,
     )
 
     if profile and profile != "":
         user = handle_user_create_with_profile_upload(user=user, profile=profile)
 
-    user_app_service = UserAppService(session=session)
     db_user = user_app_service.update_user(user=user)
 
     return {
@@ -138,6 +139,6 @@ def delete_user(current_user: AuthDep, base_user_id: str, session: SessionDep):
     """delete existing user"""
     id = check_id(id=base_user_id)
     if current_user.get("role") != Role.ADMIN.value:
-        only_own_access(current_user=current_user, id=id)
+        only_own_access(current_user=current_user, access_id=id)
     UserAppService(session).delete_user(base_user_id=id)
     return {}
