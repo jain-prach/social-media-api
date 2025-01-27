@@ -2,13 +2,14 @@ from datetime import datetime, timedelta
 
 import pytest
 from sqlmodel import Session
+from fastapi import UploadFile
 
 from src.domain.models import BaseUser, Otp, User
 from .test_data import create_user, create_admin, create_public_user, create_private_user
 from src.application.users.services import PasswordService, JWTService
-from src.application.users.users.services import UserAppService
 from .test_utils import create_value_using_session
 from src.setup.config.settings import settings
+from src.infrastructure.file_upload.services import Boto3Service
 
 
 @pytest.fixture(scope="function")
@@ -82,27 +83,41 @@ def before_user_login_cred(before_create_base_user) -> str:
     return user_login_cred
 
 @pytest.fixture(scope="function")
-def before_create_public_user(before_create_base_user) -> str:
-    def create_public_user_fixture(session: Session):
+def before_create_normal_user(before_create_base_user) -> str:
+    def create_normal_user_fixture(session: Session, user_dict: dict):
         db_base_user=before_create_base_user(session=session, user_dict=create_user())
-        user_dict = create_public_user()
-        print(user_dict)
-        with open("C:/Users/Prachi Citrusbug/Downloads/logo.jpg", 'r') as f:
-            object_key = UserAppService.handle_profile_upload(profile=f, user={**user_dict, "base_user_id":db_base_user.id})
+        with open("C:/Users/prach/Course_prac/social-media-api/src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", 'rb') as f:
+            profile = UploadFile(f)
+            object_key = f"profiles/{db_base_user.id}/{db_base_user.id}.jpeg"
+            boto3_service = Boto3Service()
+            boto3_service.upload_file_from_memory(
+                object_key=object_key,
+                file_content=profile.file,
+                file_type="image/jpeg",
+            )
             db_user = User.model_validate({**user_dict, "profile":object_key, "base_user_id":db_base_user.id})
             create_value_using_session(session=session, value=db_user)
         return db_user
-    return create_public_user_fixture
-
+    return create_normal_user_fixture
 
 @pytest.fixture(scope="function")
-def before_create_private_user(before_create_base_user) -> str:
-    def create_private_user_fixture(session: Session):
-        db_base_user=before_create_base_user(session=session, user_dict=create_user())
-        user_dict = create_private_user()
-        with open("C:/Users/Prachi Citrusbug/Downloads/logo.jpg") as f:
-            object_key = UserAppService.handle_profile_upload(profile=f, user={**user_dict, "base_user_id":db_base_user.id})
-            db_user = User.model_validate({**user_dict, "profile":object_key, "base_user_id":db_base_user.id})
-            create_value_using_session(session=session, value=db_user)
-        return db_user
-    return create_private_user_fixture
+def before_create_public_user_login_cred(before_create_normal_user):
+    def create_public_user_login_cred(session:Session):
+        db_user = before_create_normal_user(session=session, user_dict=create_public_user())
+        login_token = JWTService().create_access_token(
+            data={"id": str(db_user.base_user.id), "role": db_user.base_user.role.value},
+            expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
+        )
+        return login_token
+    return create_public_user_login_cred
+
+@pytest.fixture(scope="function")
+def before_create_private_user_login_cred(before_create_normal_user):
+    def create_private_user_login_cred(session:Session):
+        db_user = before_create_normal_user(session=session, user_dict=create_private_user())
+        login_token = JWTService().create_access_token(
+            data={"id": str(db_user.base_user.id), "role": db_user.base_user.role.value},
+            expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
+        )
+        return login_token
+    return create_private_user_login_cred

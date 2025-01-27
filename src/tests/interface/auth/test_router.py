@@ -11,14 +11,18 @@ from src.tests.test_data import (
     invalid_login,
     create_user,
     create_admin,
-    created_user
+    created_user,
 )
 from src.tests.test_utils import create_session
 from lib.fastapi.custom_enums import Role
 from src.application.users.services import JWTService
 from lib.fastapi.utils import generate_otp
 from src.setup.config.settings import settings
-from src.tests.test_fixtures import before_create_base_user, before_create_otp, before_create_otp_token
+from src.tests.test_fixtures import (
+    before_create_base_user,
+    before_create_otp,
+    before_create_otp_token,
+)
 
 
 def test_admin_registration():
@@ -69,7 +73,9 @@ def test_login_invalid_data():
 def test_login_invalid_password(before_create_base_user):
     session = create_session()
     user = before_create_base_user(session=session, user_dict=create_user())
-    response = client.post(url="/login", json=created_user_login_invalid_password(email=user.email))
+    response = client.post(
+        url="/login", json=created_user_login_invalid_password(email=user.email)
+    )
     session.close()
     assert response.status_code == 401
 
@@ -94,7 +100,6 @@ def test_forgot_password_for_user_not_created():
     session.close()
     assert response.status_code == 200
     assert email not in otp_user_emails
-    
 
 
 def test_verify_otp(before_create_otp):
@@ -107,7 +112,6 @@ def test_verify_otp(before_create_otp):
     session.close()
     assert response.status_code == 200
     assert "otp_token" in data.keys()
-    
 
 
 def test_verify_otp_with_wrong_otp(before_create_otp):
@@ -120,7 +124,6 @@ def test_verify_otp_with_wrong_otp(before_create_otp):
     session.close()
     assert response.status_code == 401
     assert "otp_token" not in data.keys()
-    
 
 
 def test_reset_password(before_create_otp_token):
@@ -153,13 +156,14 @@ def test_reset_password_invalid_token(before_create_otp):
     session.close()
     assert response.status_code == 401
 
+
 def test_reset_password_invalid_token_payload(before_create_otp):
     session = create_session()
     otp = before_create_otp(session)
     otp_token = JWTService().create_access_token(
-            data={"otp": otp.otp},
-            expire=datetime.now() + timedelta(**settings.OTP_EXPIRE_TIME),
-        )
+        data={"otp": otp.otp},
+        expire=datetime.now() + timedelta(**settings.OTP_EXPIRE_TIME),
+    )
     response = client.post(
         url="/reset-password/",
         json={"otp_token": otp_token, "new_password": "Practice@123New"},
