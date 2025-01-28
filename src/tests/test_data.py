@@ -33,6 +33,12 @@ def created_user_login_invalid_password(email):
         "password": "invalid",
     }
 
+weak_password = {"email": fake.email(), "password": "weak", "role":Role.ADMIN}
+invalid_role = {"email": fake.email(), "password": "weak", "role":"invalid"}
+no_password = {"email": fake.email(), "role":Role.ADMIN}
+no_role = {"email": fake.email(), "password": "Practice@123"}
+no_email = {"password": "Practice@123", "role":Role.ADMIN}
+
 invalid_login = {"email": fake.email(), "password": "invalid"}
 
 def admin_registration_wrong_email():

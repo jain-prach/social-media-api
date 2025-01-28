@@ -21,10 +21,10 @@ class StatusType(str, Enum):
 
 class FilterDates(str, Enum):
     """enum for filtering by dates"""
-    THIS_MONTH = "this month"
-    LAST_SIX_MONTHS = "last 6 months"
-    LAST_ONE_YEAR = "last 1 year"
-    LAST_TEN_YEARS = "last 10 years"
+    THIS_MONTH = "this-month"
+    LAST_SIX_MONTHS = "last-6-months"
+    LAST_ONE_YEAR = "last-1-year"
+    LAST_TEN_YEARS = "last-10-years"
 
 class ReportReason(str, Enum):
     """enum for selecting reporting reason"""
@@ -51,3 +51,9 @@ class PriceModel(int, Enum):
     YEARLY = 400
     MONTHLY = 100
     DAILY = 20
+
+class Environment(str, Enum):
+    DEVELOPMENT = "development"
+    TESTING = "testing"
+    STAGING = "staging"
+    PRODUCTION = "production"
