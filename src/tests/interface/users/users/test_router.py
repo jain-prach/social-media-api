@@ -57,7 +57,6 @@ def test_get_user_for_user_not_found(before_create_public_user_login_cred):
     token = before_create_public_user_login_cred(session=session)
     session.close()
     response = client.get(f"user/{get_username()}/", headers=get_auth_header(token))
-    data = response.json()["data"]
     assert response.status_code == 404
 
 

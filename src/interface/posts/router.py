@@ -80,7 +80,7 @@ def create_post(
 
 
 @router.put("/{id}/", status_code=HTTP_200_OK, response_model=PostResponseData)
-def update_post(current_user: AuthDep, session: SessionDep, id:str, caption:Optional[str]=Form(None)):
+def update_post(current_user: AuthDep, session: SessionDep, id:str, caption:str):
     """update post by current user (only caption)"""
     user = check_permission_to_post(current_user=current_user, session=session)
     post_id = check_id(id=id)

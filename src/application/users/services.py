@@ -17,7 +17,7 @@ from src.interface.users.schemas import (
 from src.infrastructure.email_service.services import SendgridService
 from src.infrastructure.auth_service.services import JWTService
 from src.infrastructure.oauth_service.services import GithubOauthService
-from lib.fastapi.custom_exceptions import UnauthorizedException, NotFoundException
+from lib.fastapi.custom_exceptions import UnauthorizedException, NotFoundException, BadRequestException
 from lib.fastapi.error_string import (
     get_user_not_found,
     get_incorrect_password,
@@ -27,7 +27,7 @@ from lib.fastapi.error_string import (
     get_otp_link_expired,
     get_invalid_otp_token
 )
-from lib.fastapi.custom_enums import Role
+from lib.fastapi.custom_enums import Role, Environment
 from src.setup.config.settings import settings
 from .tasks import delete_otp
 from lib.fastapi.utils import get_default_timezone
@@ -179,8 +179,10 @@ class BaseUserAppService:
             + timedelta(**settings.OTP_EXPIRE_TIME),
         )
 
-        # send otp email using sendgrid
-        ForgotPasswordService().send_otp_email(otp=otp.otp, user=user)
+        if settings.ENVIRONMENT != Environment.TESTING.value:
+            # send otp email using sendgrid
+            # print("sending email")
+            ForgotPasswordService().send_otp_email(otp=otp.otp, user=user)
 
         return None
 
@@ -216,7 +218,7 @@ class BaseUserAppService:
         """reset password using otp_token"""
         payload = JWTService().decode(token=otp_token)
         if not payload.get("id") or not payload.get("otp") or not payload.get("exp"):
-            raise UnauthorizedException(get_invalid_otp_token())
+            raise BadRequestException(get_invalid_otp_token())
         if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
             raise NotFoundException(get_otp_link_expired())
         base_user_id = payload.get("id")

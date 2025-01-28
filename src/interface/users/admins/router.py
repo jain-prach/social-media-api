@@ -51,19 +51,19 @@ router = APIRouter(
 #         "data": dict(**db_user.model_dump()),
 #     }
 
-
-@router.get("/me/", status_code=HTTP_200_OK, response_model=AdminResponseData)
-def get_admin(
-    current_user: AuthDep, session: SessionDep
-):
-    """get own admin details"""
-    only_admin_access(current_user=current_user)
-    id = check_id(current_user.get("id"))
-    admin_app_service = AdminAppService(session)
-    admin = admin_app_service.get_admin_by_base_user_id(base_user_id=id)
-    if not admin:
-        raise NotFoundException(get_admin_not_created())
-    return {"message": "Admin Details", "data": admin}
+# one me router already exists
+# @router.get("/me/", status_code=HTTP_200_OK, response_model=AdminResponseData)
+# def get_admin(
+#     current_user: AuthDep, session: SessionDep
+# ):
+#     """get own admin details"""
+#     only_admin_access(current_user=current_user)
+#     id = check_id(current_user.get("id"))
+#     admin_app_service = AdminAppService(session)
+#     admin = admin_app_service.get_admin_by_base_user_id(base_user_id=id)
+#     if not admin:
+#         raise NotFoundException(get_admin_not_created())
+#     return {"message": "Admin Details", "data": admin}
 
 
 @router.delete("/{id}/", status_code=HTTP_200_OK, response_model=DeleteAdminResponseData)
