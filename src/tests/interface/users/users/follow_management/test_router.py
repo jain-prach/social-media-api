@@ -220,8 +220,7 @@ def test_send_request_for_invalid_username(before_create_private_user_login_cred
         json={"username": "invalid"},
     )
     assert response.status_code == 404
-
-
+    
 def test_accept_request(
     before_create_private_user_login_cred,
     before_create_normal_user,
@@ -418,10 +417,7 @@ def test_remove_follower_for_no_follower(
         json={"username": username},
     )
     assert response.status_code == 200
-<<<<<<< HEAD
-=======
-
-
+    
 def test_follow_send_request_to_private_user_then_accept_request_and_unfollow(
     before_create_public_user_login_cred, before_create_private_user_login_cred
 ):
@@ -506,4 +502,3 @@ def test_follow_send_request_to_private_user_then_reject_request(
     ).first()
     assert db_follow is None
     session.close()
->>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3

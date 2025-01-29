@@ -171,13 +171,9 @@ def before_create_private_user_login_cred(before_create_normal_user):
 @pytest.fixture(scope="function")
 def before_create_post(before_create_normal_user):
     def create_post(session: Session, user_dict: dict):
-<<<<<<< HEAD
-        db_user = session.scalars(select(User).where(User.username == user_dict["username"])).first()
-=======
         db_user = session.scalars(
             select(User).where(User.username == user_dict["username"])
         ).first()
->>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3
         if not db_user:
             db_user = before_create_normal_user(session=session, user_dict=user_dict)
         db_post = Post.model_validate(

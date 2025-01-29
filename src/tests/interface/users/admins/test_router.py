@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-from src.tests.test_client import client, setup_database
-from src.tests.test_fixtures import before_create_private_user_login_cred
-
-# def test_get_reported_posts(before_create_private_user_login_cred)
-=======
 import uuid
 
 from src.tests.test_client import client, setup_database
@@ -103,4 +97,3 @@ def test_delete_reported_post_by_user_login(before_create_private_user_login_cre
         f"/admin/reported_posts/{uuid.uuid4()}/", headers=get_auth_header(token=token)
     )
     assert response.status_code == 403
->>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3

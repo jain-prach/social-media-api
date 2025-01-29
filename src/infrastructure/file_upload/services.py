@@ -6,10 +6,8 @@ from botocore.exceptions import ClientError
 
 from src.setup.config.settings import settings
 from lib.fastapi.custom_enums import Environment
-<<<<<<< HEAD
-=======
 from lib.fastapi.custom_exceptions import CustomException
->>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3
+
 
 
 class Boto3Service:
@@ -118,11 +116,7 @@ class Boto3Service:
             )
             return url
         except ClientError as e:
-<<<<<<< HEAD
-            print(e)
-=======
             raise CustomException(detail=f"Client Error in Boto3: {e}")
->>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3
 
     def delete_bucket(self, bucket_name: str) -> None:
         """delete s3 bucket after emptying its content"""
@@ -136,8 +130,4 @@ class Boto3Service:
                     self.__client.delete_object(Bucket=bucket_name, Key=obj["Key"])
                 self.__client.delete_bucket(Bucket=bucket_name)
         except ClientError as e:
-<<<<<<< HEAD
-            print(e)
-=======
             raise CustomException(detail=f"Client Error in Boto3: {e}")
->>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3
