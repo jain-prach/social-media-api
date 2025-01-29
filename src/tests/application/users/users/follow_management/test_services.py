@@ -22,7 +22,7 @@ from src.tests.test_fixtures import (
 from src.tests.test_client import setup_database
 from src.tests.test_data import create_public_user, create_private_user, get_username
 from lib.fastapi.custom_enums import StatusType, ProfileType
-from lib.fastapi.custom_exceptions import BadRequestException, ForbiddenException
+from lib.fastapi.custom_exceptions import NotFoundException, ForbiddenException
 
 
 def test_get_follow_by_follow_id(before_create_follow):
@@ -54,7 +54,7 @@ def test_get_user_by_base_user_id(before_create_normal_user):
 
 def test_get_user_by_base_user_id_for_no_user():
     session = create_session()
-    with pytest.raises(BadRequestException):
+    with pytest.raises(NotFoundException):
         FollowAppService(session=session).get_user_by_base_user_id(
             base_user_id=uuid.uuid4()
         )
@@ -74,7 +74,7 @@ def test_get_user_by_username(before_create_normal_user):
 
 def test_get_user_by_username_for_no_user():
     session = create_session()
-    with pytest.raises(BadRequestException):
+    with pytest.raises(NotFoundException):
         FollowAppService(session=session).get_user_by_username(username=get_username())
     session.close()
 

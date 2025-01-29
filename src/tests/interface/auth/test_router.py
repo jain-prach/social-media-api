@@ -12,6 +12,11 @@ from src.tests.test_data import (
     create_user,
     create_admin,
     created_user,
+    weak_password,
+    invalid_role,
+    no_password,
+    no_email,
+    no_role,
 )
 from src.tests.test_utils import create_session
 from lib.fastapi.custom_enums import Role
@@ -25,7 +30,7 @@ from src.tests.test_fixtures import (
 )
 
 
-def test_admin_registration():
+def test_registration_admin():
     """create admin with correct data"""
     response = client.post(
         url="/register/",
@@ -42,7 +47,7 @@ def test_registration_with_wrong_email():
     assert response.status_code == 422
 
 
-def test_user_registration():
+def test_registration_user():
     """create user with correct data"""
     response = client.post(
         url="/register/",
@@ -53,15 +58,57 @@ def test_user_registration():
     assert data["role"] == Role.USER.value
 
 
+def test_registration_without_password():
+    response = client.post(
+        url="/register/",
+        json=no_password,
+    )
+    assert response.status_code == 422
+
+
+def test_registration_without_role():
+    response = client.post(
+        url="/register/",
+        json=no_role,
+    )
+    assert response.status_code == 422
+
+
+def test_registration_without_email():
+    response = client.post(
+        url="/register/",
+        json=no_email,
+    )
+    assert response.status_code == 422
+
+
+def test_registration_with_weak_password():
+    response = client.post(
+        url="/register/",
+        json=weak_password,
+    )
+    assert response.status_code == 422
+
+
+def test_registration_with_wrong_role():
+    response = client.post(
+        url="/register/",
+        json=invalid_role,
+    )
+    assert response.status_code == 422
+
+
 def test_login(before_create_base_user):
     """test login response"""
     session = create_session()
     user = before_create_base_user(session=session, user_dict=create_user())
     response = client.post(url="/login/", json=created_user(email=user.email))
     data = response.json()["data"]
-    session.close()
     assert response.status_code == 200
     assert "access_token" in data.keys()
+    payload = JWTService().decode(token=data["access_token"])
+    assert payload.get("id") == str(user.id)
+    session.close()
 
 
 def test_login_invalid_data():
@@ -90,6 +137,11 @@ def test_forgot_password(before_create_base_user):
     session.close()
     assert response.status_code == 200
     assert otp is not None
+
+
+def test_forgot_password_invalid_email():
+    response = client.post(url="/forgot-password/", json={"email": "invalid"})
+    assert response.status_code == 422
 
 
 def test_forgot_password_for_user_not_created():
@@ -136,6 +188,16 @@ def test_reset_password(before_create_otp_token):
     session.close()
     assert response.status_code == 200
 
+def test_reset_password_with_weak_password(before_create_otp_token):
+    session = create_session()
+    otp_token = before_create_otp_token(session)
+    response = client.post(
+        url="/reset-password/",
+        json={"otp_token": otp_token, "new_password": "weak"},
+    )
+    session.close()
+    assert response.status_code == 422
+
 
 def test_reset_password_invalid_token(before_create_otp):
     session = create_session()
@@ -169,4 +231,29 @@ def test_reset_password_invalid_token_payload(before_create_otp):
         json={"otp_token": otp_token, "new_password": "Practice@123New"},
     )
     session.close()
-    assert response.status_code == 401
+    assert response.status_code == 400
+
+
+def test_forgot_password_flow(before_create_base_user):
+    session = create_session()
+    user = before_create_base_user(session=session, user_dict=create_user())
+    email = user.email
+    response = client.post(url="/forgot-password/", json={"email": email})
+    assert response.status_code == 200
+    # can't get it from response as user email is sent
+    otp = user.otp.otp
+    response2 = client.post(url="/verify-otp/", json={"otp": otp, "email": email})
+    assert response2.status_code == 200
+    otp_token = response2.json()["data"]["otp_token"]
+    new_password = "Practice@123New"
+    response3 = client.post(
+        url="/reset-password/",
+        json={"otp_token": otp_token, "new_password": new_password},
+    )
+    assert response3.status_code == 200
+    # login with new password
+    response4 = client.post(
+        url="/login/", json={"email": email, "password": new_password}
+    )
+    assert response4.status_code == 200
+    assert "access_token" in (response4.json()["data"]).keys()

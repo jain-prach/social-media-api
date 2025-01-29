@@ -11,7 +11,7 @@ from ..utils import check_permission_to_post
 
 router = APIRouter(prefix="/like", tags=["posts"], route_class=UniqueConstraintErrorRoute)
 
-@router.post("/{post_id}/", status_code=HTTP_200_OK, response_model=LikePostResponseData)
+@router.get("/{post_id}/", status_code=HTTP_200_OK, response_model=LikePostResponseData)
 def like_post(current_user:AuthDep, post_id:str, session:SessionDep):
     """like post by post_id"""
     user = check_permission_to_post(current_user=current_user, session=session)

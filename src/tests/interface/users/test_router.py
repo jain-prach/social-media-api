@@ -1,3 +1,5 @@
+import uuid
+
 from sqlmodel import select
 
 from src.domain.models import BaseUser
@@ -36,6 +38,14 @@ def test_get_base_user(before_admin_login_cred, before_create_base_user):
     data = response.json()["data"]
     assert response.status_code == 200
     assert data["id"] == str(user.id)
+
+
+def test_get_base_user_for_no_data(before_admin_login_cred, before_create_base_user):
+    session = create_session()
+    token=before_admin_login_cred(session)
+    session.close()
+    response = client.get(f"/base-user/{uuid.uuid4()}/", headers=get_auth_header(token))
+    assert response.status_code == 404
 
 def test_get_base_user_with_user_login(before_user_login_cred, before_create_base_user):
     session = create_session()
