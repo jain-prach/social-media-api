@@ -125,7 +125,7 @@ class FollowAppService:
         user = self.get_user_by_username(username=username)
         if user.username == follower.username:
             raise CustomValidationError(get_send_request_to_yourself())
-        if user.profile_type == ProfileType.PRIVATE:
+        if user.profile_type == ProfileType.PRIVATE.value:
             return self.send_request(follower=follower, user=user)
         return self.create_follower(follower=follower, user=user)
 

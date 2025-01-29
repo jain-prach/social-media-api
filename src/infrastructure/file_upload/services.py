@@ -6,6 +6,10 @@ from botocore.exceptions import ClientError
 
 from src.setup.config.settings import settings
 from lib.fastapi.custom_enums import Environment
+<<<<<<< HEAD
+=======
+from lib.fastapi.custom_exceptions import CustomException
+>>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3
 
 
 class Boto3Service:
@@ -13,13 +17,13 @@ class Boto3Service:
 
     def __new__(cls):
         if not settings.AWS_S3_ENDPOINT_URL:
-            raise Exception("Storage endpoint url not found!")
+            raise CustomException(detail="Storage endpoint url not found!")
         if not settings.AWS_BUCKET_NAME:
-            raise Exception("AWS bucket name not found!")
+            raise CustomException(detail="AWS bucket name not found!")
         if not settings.AWS_ACCESS_KEY_ID:
-            raise Exception("AWS access_key not found!")
+            raise CustomException(detail="AWS access_key not found!")
         if not settings.AWS_SECRET_KEY_ID:
-            raise Exception("AWS secret_key not found!")
+            raise CustomException(detail="AWS secret_key not found!")
         if not hasattr(cls, "instance"):
             cls.instance = super(Boto3Service, cls).__new__(cls)
         return cls.instance
@@ -38,7 +42,7 @@ class Boto3Service:
         else:
             self.bucket_name = settings.TEST_AWS_BUCKET_NAME
 
-    def _create_bucket(self, bucket_name: str):
+    def _create_bucket(self, bucket_name: str) -> None:
         """create bucket if doesn't exist or prints a list of buckets in existence"""
         bucket_names = [
             bucket["Name"] for bucket in self.__client.list_buckets()["Buckets"]
@@ -61,7 +65,7 @@ class Boto3Service:
                 ExtraArgs={"ContentType": content_type},
             )
         except ClientError as e:
-            print(e)
+            raise CustomException(detail=f"Client Error in Boto3: {e}")
 
     def upload_file_from_memory(
         self, object_key: str, file_content: IO, file_type: str
@@ -77,7 +81,7 @@ class Boto3Service:
                 ContentType=file_type,
             )
         except ClientError as e:
-            print(e)
+            raise CustomException(detail=f"Client Error in Boto3: {e}")
 
     def download_file(self, object_key: str, download_path: str) -> None:
         """download file to source path"""
@@ -86,7 +90,7 @@ class Boto3Service:
                 Bucket=self.bucket_name, Key=object_key, Filename=download_path
             )
         except ClientError as e:
-            print(e)
+            raise CustomException(detail=f"Client Error in Boto3: {e}")
 
     def download_file_into_memory(self, object_key: str, buffer):
         """download file into memory"""
@@ -96,13 +100,13 @@ class Boto3Service:
             )
         except ClientError as e:
             print(e)
-    
-    def delete_file(self, object_key:str):
+
+    def delete_file(self, object_key: str) -> None:
         """delete file using object_key"""
         try:
             self.__client.delete_object(Bucket=self.bucket_name, Key=object_key)
         except ClientError as e:
-            print(e)
+            raise CustomException(detail=f"Client Error in Boto3: {e}")
 
     def get_presigned_url(self, object_key: str) -> Optional[str]:
         """get temporary url"""
@@ -114,7 +118,11 @@ class Boto3Service:
             )
             return url
         except ClientError as e:
+<<<<<<< HEAD
             print(e)
+=======
+            raise CustomException(detail=f"Client Error in Boto3: {e}")
+>>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3
 
     def delete_bucket(self, bucket_name: str) -> None:
         """delete s3 bucket after emptying its content"""
@@ -128,4 +136,8 @@ class Boto3Service:
                     self.__client.delete_object(Bucket=bucket_name, Key=obj["Key"])
                 self.__client.delete_bucket(Bucket=bucket_name)
         except ClientError as e:
+<<<<<<< HEAD
             print(e)
+=======
+            raise CustomException(detail=f"Client Error in Boto3: {e}")
+>>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3

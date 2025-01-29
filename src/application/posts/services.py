@@ -138,8 +138,13 @@ class PostAppService:
         if not db_post:
             # return None
             raise NotFoundException(get_post_not_found())
+<<<<<<< HEAD
         if db_post.report is None:
             return BadRequestException(get_post_not_reported())
+=======
+        if len(db_post.report) == 0:
+            raise BadRequestException(get_post_not_reported())
+>>>>>>> db81b47e93c4576a973deb70e666e05a70868fe3
         # send email to post owners
         base_user_app_service = BaseUserAppService(session=self.db_session)
         base_user = base_user_app_service.get_base_user_by_user_id(
