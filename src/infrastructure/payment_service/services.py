@@ -12,7 +12,7 @@ class StripeService:
 
     def __new__(cls):
         if not settings.STRIPE_API_KEY:
-            raise Exception("Error: stripe api key not found")
+            raise CustomException(detail="Error: stripe api key not found")
         if not hasattr(cls, "instance"):
             cls.instance = super(StripeService, cls).__new__(cls)
         return cls.instance

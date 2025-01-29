@@ -9,7 +9,7 @@ from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
 from lib.fastapi.utils import check_id
 from ..utils import check_permission_to_post
 
-router = APIRouter(prefix="/report_post", tags=["posts"], route_class=UniqueConstraintErrorRoute)
+router = APIRouter(prefix="/report-post", tags=["posts"], route_class=UniqueConstraintErrorRoute)
 
 
 @router.post(
