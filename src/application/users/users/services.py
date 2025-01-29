@@ -14,7 +14,6 @@ from lib.fastapi.custom_exceptions import ForbiddenException, CustomValidationEr
 from lib.fastapi.error_string import get_user_is_private, get_user_not_created
 from lib.fastapi.utils import check_id
 
-
 class UserAppService:
     """services for user model"""
 
@@ -63,23 +62,29 @@ class UserAppService:
         return self.user_service.update(user=user, db_user=db_user)
 
     def delete_user(self, base_user_id: uuid.UUID) -> None:
+        """delete user by base_user_id"""
         user = self.get_user_by_base_user_id(base_user_id=base_user_id)
         if not user:
             return None
         self.user_service.delete(user=user)
         return None
+    
+    @staticmethod
+    def get_user_id_of_followers(user:User) -> List[uuid.UUID]:
+        """get list of user ids of all followers of user"""
+        return [
+            follower.follower.id
+            for follower in user.followers
+            if follower.status == StatusType.APPROVED
+        ]
 
     def check_private_user(self, current_user: dict, user: User) -> None:
         """check if user is private and whether current user follows the user"""
         if current_user["role"] != Role.ADMIN.value:
             current_user_id = check_id(id=current_user.get("id"))
             db_user = self.get_user_by_base_user_id(base_user_id=current_user_id)
-            if user.profile_type == ProfileType.PRIVATE:
-                followers_user_id = [
-                    follower.follower.id
-                    for follower in user.followers
-                    if follower.status == StatusType.APPROVED
-                ]
+            if user.profile_type == ProfileType.PRIVATE.value:
+                followers_user_id = self.get_user_id_of_followers(user=user)
                 # print(user.followers)
                 # print(followers_user_id)
                 # print(db_user)

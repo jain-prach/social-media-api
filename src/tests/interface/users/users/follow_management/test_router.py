@@ -20,7 +20,7 @@ from src.tests.test_utils import (
 )
 from src.tests.test_data import create_private_user, create_public_user
 from src.application.users.services import JWTService
-from src.domain.models import BaseUser, User
+from src.domain.models import BaseUser, User, FollowersModel
 from lib.fastapi.custom_enums import StatusType
 
 
@@ -220,8 +220,7 @@ def test_send_request_for_invalid_username(before_create_private_user_login_cred
         json={"username": "invalid"},
     )
     assert response.status_code == 404
-
-
+    
 def test_accept_request(
     before_create_private_user_login_cred,
     before_create_normal_user,
@@ -418,3 +417,88 @@ def test_remove_follower_for_no_follower(
         json={"username": username},
     )
     assert response.status_code == 200
+    
+def test_follow_send_request_to_private_user_then_accept_request_and_unfollow(
+    before_create_public_user_login_cred, before_create_private_user_login_cred
+):
+    session = create_session()
+    token1 = before_create_public_user_login_cred(session=session)
+    token2 = before_create_private_user_login_cred(session=session)
+    payload1 = JWTService().decode(token=token1)
+    payload2 = JWTService().decode(token=token2)
+    user1 = session.scalars(
+        select(User).where(User.base_user_id == payload1.get("id"))
+    ).first()
+    user2 = session.scalars(
+        select(User).where(User.base_user_id == payload2.get("id"))
+    ).first()
+    response = client.post(
+        "/follow/send/",
+        headers=get_auth_header(token=token1),
+        json={"username": user2.username},
+    )
+    assert response.status_code == 201
+    assert user1 in [
+        f.follower for f in user2.followers if f.status == StatusType.PENDING.value
+    ]
+    response = client.post(
+        "/follow/accept/",
+        headers=get_auth_header(token=token2),
+        json={"username": user1.username},
+    )
+    assert response.status_code == 200
+    session.refresh(user2)
+    assert user1 in [
+        f.follower for f in user2.followers if f.status == StatusType.APPROVED.value
+    ]
+    response = client.post(
+        "/follow/unfollow/",
+        headers=get_auth_header(token=token1),
+        json={"username": user2.username},
+    )
+    assert response.status_code == 200
+    db_follow = session.scalars(
+        select(FollowersModel)
+        .where(FollowersModel.follower_id == user1.id)
+        .where(FollowersModel.following_id == user2.id)
+    ).first()
+    assert db_follow is None
+    session.close()
+
+
+def test_follow_send_request_to_private_user_then_reject_request(
+    before_create_public_user_login_cred, before_create_private_user_login_cred
+):
+    session = create_session()
+    token1 = before_create_public_user_login_cred(session=session)
+    token2 = before_create_private_user_login_cred(session=session)
+    payload1 = JWTService().decode(token=token1)
+    payload2 = JWTService().decode(token=token2)
+    user1 = session.scalars(
+        select(User).where(User.base_user_id == payload1.get("id"))
+    ).first()
+    user2 = session.scalars(
+        select(User).where(User.base_user_id == payload2.get("id"))
+    ).first()
+    response = client.post(
+        "/follow/send/",
+        headers=get_auth_header(token=token1),
+        json={"username": user2.username},
+    )
+    assert response.status_code == 201
+    assert user1 in [
+        f.follower for f in user2.followers if f.status == StatusType.PENDING.value
+    ]
+    response = client.post(
+        "/follow/reject/",
+        headers=get_auth_header(token=token2),
+        json={"username": user1.username},
+    )
+    assert response.status_code == 200
+    db_follow = session.scalars(
+        select(FollowersModel)
+        .where(FollowersModel.follower_id == user1.id)
+        .where(FollowersModel.following_id == user2.id)
+    ).first()
+    assert db_follow is None
+    session.close()

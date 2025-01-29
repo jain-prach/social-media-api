@@ -102,7 +102,10 @@ def get_post_reported_once() -> str:
     return "You have already reported the post! We will look into it and get back to you!"
 
 def get_post_not_reported() -> str:
-    return "Post not reported aren't allowed to be deleted!"
+    return "Post not reported yet and hence, not allowed to delete!"
+
+def get_reporting_own_post() -> str:
+    return "You cannot report your own post, we suggest you to delete instead!"
 
 def get_user_is_private() -> str:
     return "This is an private user. You must follow to access their contents."
