@@ -12,13 +12,10 @@ from src.tests.test_fixtures import (
     before_create_public_user_with_followers,
     before_create_private_user_with_following,
     before_create_public_user_with_following,
+    before_admin_login_cred,
 )
-from src.tests.test_utils import (
-    create_session,
-    get_auth_header,
-    get_user_by_token
-)
-from src.tests.test_data import create_private_user, create_public_user
+from src.tests.test_utils import create_session, get_auth_header, get_user_by_token
+from src.tests.test_data import create_private_user, create_public_user, get_username
 from src.application.users.services import JWTService
 from src.domain.models import BaseUser, User, FollowersModel
 from lib.fastapi.custom_enums import StatusType
@@ -50,6 +47,20 @@ def test_list_received_requests(
     assert len(data) == 2
 
 
+def test_list_received_requests_with_unauthorized_access():
+    response = client.get("/follow-requests/received/")
+    assert response.status_code == 401
+
+
+def test_list_received_requests_with_admin(before_admin_login_cred):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    response = client.get(
+        "/follow-requests/received/", headers=get_auth_header(token=token)
+    )
+    assert response.status_code == 403
+
+
 def test_list_sent_requests(
     before_create_private_user_login_cred,
     before_create_normal_user,
@@ -76,6 +87,20 @@ def test_list_sent_requests(
     assert len(data) == 2
 
 
+def test_list_sent_requests_with_unauthorized_access():
+    response = client.get("/follow-requests/sent/")
+    assert response.status_code == 401
+
+
+def test_list_sent_requests_with_admin(before_admin_login_cred):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    response = client.get(
+        "/follow-requests/sent/", headers=get_auth_header(token=token)
+    )
+    assert response.status_code == 403
+
+
 def test_list_own_followers(
     before_create_public_user_login_cred,
     before_create_normal_user,
@@ -97,6 +122,23 @@ def test_list_own_followers(
     data = response.json()["data"]
     assert response.status_code == 200
     assert len(data) == 1
+
+
+def test_list_followers_with_unauthorized_access():
+    response = client.post("/followers/", json={"username": get_username()})
+    assert response.status_code == 401
+
+
+def test_list_followers_with_admin(before_admin_login_cred, before_create_normal_user):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    user = before_create_normal_user(session=session, user_dict=create_private_user())
+    response = client.post(
+        "/followers/",
+        headers=get_auth_header(token=token),
+        json={"username": user.username},
+    )
+    assert response.status_code == 200
 
 
 def test_list_followers_of_private_user(
@@ -156,6 +198,23 @@ def test_list_own_following(
     data = response.json()["data"]
     assert response.status_code == 200
     assert len(data) == 1
+
+
+def test_list_following_with_unauthorized_access():
+    response = client.post("/following/", json={"username": get_username()})
+    assert response.status_code == 401
+
+
+def test_list_following_with_admin(before_admin_login_cred, before_create_normal_user):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    user = before_create_normal_user(session=session, user_dict=create_private_user())
+    response = client.post(
+        "/following/",
+        headers=get_auth_header(token=token),
+        json={"username": user.username},
+    )
+    assert response.status_code == 200
 
 
 def test_list_following_of_private_user(
@@ -220,7 +279,27 @@ def test_send_request_for_invalid_username(before_create_private_user_login_cred
         json={"username": "invalid"},
     )
     assert response.status_code == 404
-    
+
+
+def test_send_request_with_unauthorized_access():
+    response = client.post(
+        "/follow/send/",
+        json={"username": get_username()},
+    )
+    assert response.status_code == 401
+
+
+def test_send_request_with_admin(before_admin_login_cred):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    response = client.post(
+        "/follow/send/",
+        headers=get_auth_header(token=token),
+        json={"username": get_username()},
+    )
+    assert response.status_code == 403
+
+
 def test_accept_request(
     before_create_private_user_login_cred,
     before_create_normal_user,
@@ -247,6 +326,25 @@ def test_accept_request(
         if f.status == StatusType.APPROVED.value
     ]
     session.close()
+
+
+def test_accept_request_with_unauthorized_access():
+    response = client.post(
+        "/follow/accept/",
+        json={"username": get_username()},
+    )
+    assert response.status_code == 401
+
+
+def test_accept_request_with_admin(before_admin_login_cred):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    response = client.post(
+        "/follow/accept/",
+        headers=get_auth_header(token=token),
+        json={"username": get_username()},
+    )
+    assert response.status_code == 403
 
 
 def test_accept_request_for_no_request(
@@ -303,6 +401,25 @@ def test_reject_request_for_no_request(
     assert response.status_code == 400
 
 
+def test_reject_request_with_unauthorized_access():
+    response = client.post(
+        "/follow/reject/",
+        json={"username": get_username()},
+    )
+    assert response.status_code == 401
+
+
+def test_reject_request_with_admin(before_admin_login_cred):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    response = client.post(
+        "/follow/reject/",
+        headers=get_auth_header(token=token),
+        json={"username": get_username()},
+    )
+    assert response.status_code == 403
+
+
 def test_cancel_request(
     before_create_private_user_login_cred,
     before_create_normal_user,
@@ -339,6 +456,25 @@ def test_cancel_request_for_no_request(
         json={"username": user.username},
     )
     assert response.status_code == 200
+
+
+def test_cancel_request_with_unauthorized_access():
+    response = client.post(
+        "/follow/cancel/",
+        json={"username": get_username()},
+    )
+    assert response.status_code == 401
+
+
+def test_cancel_request_with_admin(before_admin_login_cred):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    response = client.post(
+        "/follow/cancel/",
+        headers=get_auth_header(token=token),
+        json={"username": get_username()},
+    )
+    assert response.status_code == 403
 
 
 def test_unfollow(
@@ -380,6 +516,25 @@ def test_unfollow_for_no_following(
     assert response.status_code == 200
 
 
+def test_unfollow_with_unauthorized_access():
+    response = client.post(
+        "/follow/unfollow/",
+        json={"username": get_username()},
+    )
+    assert response.status_code == 401
+
+
+def test_unfollow_with_admin(before_admin_login_cred):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    response = client.post(
+        "/follow/unfollow/",
+        headers=get_auth_header(token=token),
+        json={"username": get_username()},
+    )
+    assert response.status_code == 403
+
+
 def test_remove_follower(
     before_create_public_user_login_cred,
     before_create_normal_user,
@@ -417,7 +572,27 @@ def test_remove_follower_for_no_follower(
         json={"username": username},
     )
     assert response.status_code == 200
-    
+
+
+def test_remove_follower_with_unauthorized_access():
+    response = client.post(
+        "/follow/remove-follower/",
+        json={"username": get_username()},
+    )
+    assert response.status_code == 401
+
+
+def test_remove_follower_with_admin(before_admin_login_cred):
+    session = create_session()
+    token = before_admin_login_cred(session=session)
+    response = client.post(
+        "/follow/remove-follower/",
+        headers=get_auth_header(token=token),
+        json={"username": get_username()},
+    )
+    assert response.status_code == 403
+
+
 def test_follow_send_request_to_private_user_then_accept_request_and_unfollow(
     before_create_public_user_login_cred, before_create_private_user_login_cred
 ):

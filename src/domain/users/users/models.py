@@ -15,7 +15,7 @@ class User(BaseModel, table=True):
     """
 
     base_user_id: uuid.UUID = Field(
-        index=True, foreign_key="baseuser.id", ondelete="CASCADE"
+        index=True, foreign_key="baseuser.id", ondelete="CASCADE", unique=True
     )
     username: str = Field(index=True, unique=True, nullable=False)
     bio: str = Field(default=None, nullable=True)

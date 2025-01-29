@@ -51,7 +51,7 @@ class VerifyOtp(BaseModel):
 
     @field_validator("otp", mode="after")
     @classmethod
-    def valid_otp(cls, otp: int) -> str:
+    def valid_otp(cls, otp: int) -> int:
         if not otp > 100000 and not otp < 999999:
             raise ValueError("Otp must be of 6 digit!")
         return otp

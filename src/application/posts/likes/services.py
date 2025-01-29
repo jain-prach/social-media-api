@@ -6,6 +6,7 @@ from src.interface.posts.likes.schemas import LikePost
 from src.domain.posts.likes.services import LikeService
 from src.domain.models import Likes
 from src.application.posts.services import PostAppService
+from src.application.users.users.services import UserAppService
 
 
 class LikeAppService:
@@ -28,9 +29,19 @@ class LikeAppService:
         post_app_service = PostAppService(session=self.db_session)
         post = post_app_service.get_post_by_id(id=like.post_id)
         # liked_by_list = [like.liked_by for like in post.likes] # and like.liked_by not in liked_by_list
-        if post:
-            return self.like_service.create(like=like)
-        return None
+        if not post:
+            return None
+        user_app_service = UserAppService(session=self.db_session)
+        liked_by = user_app_service.get_user_by_id(id=like.liked_by)
+        posted_by = user_app_service.get_user_by_id(id=post.posted_by)
+        user_app_service.check_private_user(
+            current_user={
+                "id": str(liked_by.base_user_id),
+                "role": liked_by.base_user.role,
+            },
+            user=posted_by,
+        )
+        return self.like_service.create(like=like)
 
     def remove_like(self, like:LikePost) -> None:
         """remove like from the post"""

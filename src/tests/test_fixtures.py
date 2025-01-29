@@ -16,6 +16,8 @@ from src.domain.models import (
     FollowersModel,
     Admin,
     ReportPost,
+    Subscription,
+    Transaction,
 )
 from .test_data import (
     create_user,
@@ -27,7 +29,12 @@ from src.application.users.services import PasswordService, JWTService
 from .test_utils import create_value_using_session
 from src.setup.config.settings import settings
 from src.infrastructure.file_upload.services import Boto3Service
-from lib.fastapi.custom_enums import StatusType, ProfileType, ReportReason
+from lib.fastapi.custom_enums import (
+    StatusType,
+    ProfileType,
+    ReportReason,
+    TransactionStatus,
+)
 
 
 @pytest.fixture(scope="function")
@@ -170,7 +177,7 @@ def before_create_private_user_login_cred(before_create_normal_user):
 
 @pytest.fixture(scope="function")
 def before_create_post(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
+    def create_post(session: Session, user_dict: dict) -> Post:
         db_user = session.scalars(
             select(User).where(User.username == user_dict["username"])
         ).first()
@@ -207,16 +214,24 @@ def before_create_post(before_create_normal_user):
                 # save urls and types to media
                 create_value_using_session(session=session, value=db_media)
         return db_post
+
     return create_post
+
 
 @pytest.fixture(scope="function")
 def before_create_post_with_different_timestamp(before_create_normal_user):
     def create_post(session: Session, user_dict: dict):
-        db_user = session.scalars(select(User).where(User.username == user_dict["username"])).first()
+        db_user = session.scalars(
+            select(User).where(User.username == user_dict["username"])
+        ).first()
         if not db_user:
             db_user = before_create_normal_user(session=session, user_dict=user_dict)
         db_post = Post.model_validate(
-            {"posted_by": db_user.id, "caption": "caption text", "created_at":datetime.now()-relativedelta(months=1)}
+            {
+                "posted_by": db_user.id,
+                "caption": "caption text",
+                "created_at": datetime.now() - relativedelta(months=1),
+            }
         )
         create_value_using_session(session=session, value=db_post)
         with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
@@ -246,17 +261,19 @@ def before_create_post_with_different_timestamp(before_create_normal_user):
                 # save urls and types to media
                 create_value_using_session(session=session, value=db_media)
         return db_post
+
     return create_post
+
 
 @pytest.fixture(scope="function")
 def before_create_post_caption_search(before_create_normal_user):
     def create_post(session: Session, user_dict: dict):
-        db_user = session.scalars(select(User).where(User.username == user_dict["username"])).first()
+        db_user = session.scalars(
+            select(User).where(User.username == user_dict["username"])
+        ).first()
         if not db_user:
             db_user = before_create_normal_user(session=session, user_dict=user_dict)
-        db_post = Post.model_validate(
-            {"posted_by": db_user.id, "caption": "search"}
-        )
+        db_post = Post.model_validate({"posted_by": db_user.id, "caption": "search"})
         create_value_using_session(session=session, value=db_post)
         with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
             media = [
@@ -285,6 +302,7 @@ def before_create_post_caption_search(before_create_normal_user):
                 # save urls and types to media
                 create_value_using_session(session=session, value=db_media)
         return db_post
+
     return create_post
 
 
@@ -533,7 +551,7 @@ def before_create_follow(
 
 @pytest.fixture(scope="function")
 def before_report_post(before_create_normal_user, before_create_post):
-    def report_post(session: Session, posted_by: dict, reported_by: dict):
+    def report_post(session: Session, posted_by: dict, reported_by: dict) -> ReportPost:
         post = before_create_post(session=session, user_dict=posted_by)
         user = session.scalars(
             select(User).where(User.username == reported_by["username"])
@@ -550,4 +568,26 @@ def before_report_post(before_create_normal_user, before_create_post):
         )
         create_value_using_session(session=session, value=db_report)
         return db_report
+
     return report_post
+
+
+@pytest.fixture(scope="function")
+def before_create_subscription():
+    def create_subscription(session: Session, user: User) -> Subscription:
+        db_transaction = Transaction.model_validate(
+            {
+                "payment_id": "cs_payment_id",
+                "user_id": user.id,
+                "amount": 50,
+                "status": TransactionStatus.COMPLETED.value,
+            }
+        )
+        create_value_using_session(session=session, value=db_transaction)
+        db_subscription = Subscription.model_validate(
+            {"transaction_id": db_transaction.id, "user_id": user.id}
+        )
+        create_value_using_session(session=session, value=db_subscription)
+        return db_subscription
+
+    return create_subscription

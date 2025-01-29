@@ -83,15 +83,16 @@ class UserAppService:
         if current_user["role"] != Role.ADMIN.value:
             current_user_id = check_id(id=current_user.get("id"))
             db_user = self.get_user_by_base_user_id(base_user_id=current_user_id)
-            if user.profile_type == ProfileType.PRIVATE.value:
-                followers_user_id = self.get_user_id_of_followers(user=user)
-                # print(user.followers)
-                # print(followers_user_id)
-                # print(db_user)
-                if db_user.id == user.id:
-                    return None
-                if db_user.id not in followers_user_id:
-                    raise ForbiddenException(get_user_is_private())
+            if db_user:
+                if user.profile_type == ProfileType.PRIVATE.value:
+                    followers_user_id = self.get_user_id_of_followers(user=user)
+                    # print(user.followers)
+                    # print(followers_user_id)
+                    # print(db_user)
+                    if db_user.id == user.id:
+                        return None
+                    if db_user.id not in followers_user_id:
+                        raise ForbiddenException(get_user_is_private())
 
     def create_dummy_user(self, base_user_id: uuid.UUID) -> User:
         """create dummy user when base_user is created"""

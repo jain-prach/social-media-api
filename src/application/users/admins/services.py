@@ -21,7 +21,7 @@ class AdminAppService:
         return self.admin_service.create(admin=admin)
     
     def delete_admin(self, base_user_id:uuid.UUID) -> None:
-        admin = self.get_admin_by_base_user_id(id=base_user_id)
+        admin = self.get_admin_by_base_user_id(base_user_id=base_user_id)
         if not admin:
             return None
         self.admin_service.delete(admin=admin)

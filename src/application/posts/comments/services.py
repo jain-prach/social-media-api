@@ -9,6 +9,7 @@ from src.domain.models import Comments
 from src.application.posts.services import PostAppService
 from lib.fastapi.custom_exceptions import NotFoundException
 from lib.fastapi.error_string import get_post_not_found
+from src.application.users.users.services import UserAppService
 
 
 class CommentAppService:
@@ -27,10 +28,21 @@ class CommentAppService:
         post_app_service = PostAppService(session=self.db_session)
         post = post_app_service.get_post_by_id(id=comment.post_id)
         if not post:
+            # return None
             raise NotFoundException(get_post_not_found())
+        user_app_service = UserAppService(session=self.db_session)
+        commented_by = user_app_service.get_user_by_id(id=comment.commented_by)
+        posted_by = user_app_service.get_user_by_id(id=post.posted_by)
+        user_app_service.check_private_user(
+            current_user={
+                "id": str(commented_by.base_user_id),
+                "role": commented_by.base_user.role,
+            },
+            user=posted_by,
+        )
         return self.comment_service.create(comment=comment)
 
-    def remove_comment(self, commented_by:uuid.UUID, comment_id: uuid.UUID) -> None:
+    def remove_comment(self, commented_by: uuid.UUID, comment_id: uuid.UUID) -> None:
         """remove comment from the post"""
         db_comment = self.get_comment_by_comment_id(comment_id=comment_id)
         if db_comment:

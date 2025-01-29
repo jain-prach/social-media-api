@@ -7,7 +7,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 from fastapi.responses import JSONResponse
-from sqlmodel import Session
+from sqlmodel import Session, SQLModel
 from pydantic import ValidationError
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -40,7 +40,7 @@ def check_id(id: str) -> uuid.UUID:
         raise CustomValidationError(get_incorrect_id())
 
 
-def db_session_value_create(session: Session, value: dict):
+def db_session_value_create(session: Session, value: SQLModel):
     """helper function for repetitive database operation"""
     session.add(value)
     session.commit()

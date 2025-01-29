@@ -114,7 +114,7 @@ class BaseUserAppService:
         """create base user without admin rights with only email - use for oauth"""
         return self.base_user_service.create(user={"email": email, "role": Role.USER})
 
-    def update_base_user(self, base_user: UpdateBaseUser) -> BaseUser:
+    def update_base_user(self, base_user: BaseUser) -> BaseUser:
         """update base user"""
         db_base_user = self.get_base_user_by_id(base_user.id)
         if not db_base_user:

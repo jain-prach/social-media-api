@@ -1,6 +1,5 @@
 import uuid
 from typing import Optional, TYPE_CHECKING
-from datetime import datetime
 
 from sqlmodel import Field, Relationship, Column, Enum
 
