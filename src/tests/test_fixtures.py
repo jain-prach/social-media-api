@@ -207,7 +207,84 @@ def before_create_post(before_create_normal_user):
                 # save urls and types to media
                 create_value_using_session(session=session, value=db_media)
         return db_post
+    return create_post
 
+@pytest.fixture(scope="function")
+def before_create_post_with_different_timestamp(before_create_normal_user):
+    def create_post(session: Session, user_dict: dict):
+        db_user = session.scalars(select(User).where(User.username == user_dict["username"])).first()
+        if not db_user:
+            db_user = before_create_normal_user(session=session, user_dict=user_dict)
+        db_post = Post.model_validate(
+            {"posted_by": db_user.id, "caption": "caption text", "created_at":datetime.now()-relativedelta(months=1)}
+        )
+        create_value_using_session(session=session, value=db_post)
+        with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
+            media = [
+                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
+                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
+            ]
+            for i, file in enumerate(media):
+                get_file_extension = str(file.filename).split(".")[-1]
+                # create object_key and upload media
+                object_key = (
+                    f"posts/{db_user.id}/{db_post.id}/post_{i}.{get_file_extension}"
+                )
+                boto3_service = Boto3Service()
+                boto3_service.upload_file_from_memory(
+                    object_key=object_key,
+                    file_content=file.file,
+                    file_type="image/jpeg",
+                )
+                db_media = Media.model_validate(
+                    {
+                        "post_id": db_post.id,
+                        "media_url": object_key,
+                        "media_type": "image/jpeg",
+                    }
+                )
+                # save urls and types to media
+                create_value_using_session(session=session, value=db_media)
+        return db_post
+    return create_post
+
+@pytest.fixture(scope="function")
+def before_create_post_caption_search(before_create_normal_user):
+    def create_post(session: Session, user_dict: dict):
+        db_user = session.scalars(select(User).where(User.username == user_dict["username"])).first()
+        if not db_user:
+            db_user = before_create_normal_user(session=session, user_dict=user_dict)
+        db_post = Post.model_validate(
+            {"posted_by": db_user.id, "caption": "search"}
+        )
+        create_value_using_session(session=session, value=db_post)
+        with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
+            media = [
+                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
+                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
+            ]
+            for i, file in enumerate(media):
+                get_file_extension = str(file.filename).split(".")[-1]
+                # create object_key and upload media
+                object_key = (
+                    f"posts/{db_user.id}/{db_post.id}/post_{i}.{get_file_extension}"
+                )
+                boto3_service = Boto3Service()
+                boto3_service.upload_file_from_memory(
+                    object_key=object_key,
+                    file_content=file.file,
+                    file_type="image/jpeg",
+                )
+                db_media = Media.model_validate(
+                    {
+                        "post_id": db_post.id,
+                        "media_url": object_key,
+                        "media_type": "image/jpeg",
+                    }
+                )
+                # save urls and types to media
+                create_value_using_session(session=session, value=db_media)
+        return db_post
     return create_post
 
 

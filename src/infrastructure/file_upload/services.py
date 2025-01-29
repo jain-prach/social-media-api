@@ -9,6 +9,7 @@ from lib.fastapi.custom_enums import Environment
 from lib.fastapi.custom_exceptions import CustomException
 
 
+
 class Boto3Service:
     """upload files to AWS Bucket using boto3"""
 
