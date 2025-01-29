@@ -1,0 +1,4 @@
+from src.tests.test_client import client, setup_database
+from src.tests.test_fixtures import before_create_private_user_login_cred
+
+# def test_get_reported_posts(before_create_private_user_login_cred)

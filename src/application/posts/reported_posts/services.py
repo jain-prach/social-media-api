@@ -28,6 +28,7 @@ class ReportPostAppService:
         """report post for post_id"""
         post_app_service = PostAppService(session=self.db_session)
         post = post_app_service.get_post_by_id(id=report.post_id)
+        # add logic to not report for private user
         # reported_by_list = [report.reported_by for report in post.report] #and report.reported_by not in reported_by_list
         if post:
             return self.report_post_service.create(report=report)

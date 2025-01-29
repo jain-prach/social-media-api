@@ -6,7 +6,7 @@ from sqlmodel import Session
 from src.domain.models import FollowersModel, User
 from src.domain.users.users.follow_management.services import FollowService
 from src.application.users.users.services import UserAppService
-from lib.fastapi.custom_exceptions import BadRequestException, CustomValidationError
+from lib.fastapi.custom_exceptions import NotFoundException, CustomValidationError, BadRequestException
 from lib.fastapi.error_string import (
     get_user_not_created,
     get_send_request_to_yourself,
@@ -30,21 +30,21 @@ class FollowAppService:
         return self.follow_service.get_follow_by_follow_id(id=id)
 
     def get_user_by_base_user_id(self, base_user_id: uuid.UUID) -> User:
-        """get user by base user id, raise BadRequestException if user not created"""
+        """get user by base user id, raise NotFoundException if user not created"""
         user = UserAppService(session=self.db_session).get_user_by_base_user_id(
             base_user_id=base_user_id
         )
         if not user:
-            raise BadRequestException(get_user_not_created())
+            raise NotFoundException(get_user_not_created())
         return user
 
     def get_user_by_username(self, username: str) -> User:
-        """get user by username, raise BadRequestException if user not created"""
+        """get user by username, raise NotFoundException if user not created"""
         user = UserAppService(session=self.db_session).get_user_by_username(
             username=username
         )
         if not user:
-            raise BadRequestException(get_user_not_found())
+            raise NotFoundException(get_user_not_found())
         return user
 
     def get_all_followers(self, base_user_id: uuid.UUID) -> List[FollowersModel]:

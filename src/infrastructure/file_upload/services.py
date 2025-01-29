@@ -1,10 +1,11 @@
 from datetime import timedelta
-from typing import IO
+from typing import IO, Optional
 
 import boto3
 from botocore.exceptions import ClientError
 
 from src.setup.config.settings import settings
+from lib.fastapi.custom_enums import Environment
 
 
 class Boto3Service:
@@ -32,7 +33,10 @@ class Boto3Service:
             verify=False,
             # region_name=settings.AWS_S3_REGION_NAME,
         )
-        self.bucket_name = settings.AWS_BUCKET_NAME
+        if settings.ENVIRONMENT != Environment.TESTING.value:
+            self.bucket_name = settings.AWS_BUCKET_NAME
+        else:
+            self.bucket_name = settings.TEST_AWS_BUCKET_NAME
 
     def _create_bucket(self, bucket_name: str):
         """create bucket if doesn't exist or prints a list of buckets in existence"""
@@ -100,7 +104,7 @@ class Boto3Service:
         except ClientError as e:
             print(e)
 
-    def get_presigned_url(self, object_key: str) -> None:
+    def get_presigned_url(self, object_key: str) -> Optional[str]:
         """get temporary url"""
         try:
             url = self.__client.generate_presigned_url(
@@ -109,5 +113,19 @@ class Boto3Service:
                 ExpiresIn=timedelta(**settings.PRESIGNED_URL_TIME).total_seconds(),
             )
             return url
+        except ClientError as e:
+            print(e)
+
+    def delete_bucket(self, bucket_name: str) -> None:
+        """delete s3 bucket after emptying its content"""
+        try:
+            bucket_names = [
+                bucket["Name"] for bucket in self.__client.list_buckets()["Buckets"]
+            ]
+            if bucket_name in bucket_names:
+                objects = self.__client.list_objects_v2(Bucket=bucket_name)
+                for obj in objects["Contents"]:
+                    self.__client.delete_object(Bucket=bucket_name, Key=obj["Key"])
+                self.__client.delete_bucket(Bucket=bucket_name)
         except ClientError as e:
             print(e)

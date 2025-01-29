@@ -8,9 +8,9 @@ from src.interface.posts.schemas import PostSchema
 from src.application.users.users.services import UserAppService
 from src.application.users.services import BaseUserAppService
 from src.domain.models import Post, BaseUser, User
-from lib.fastapi.custom_exceptions import NotFoundException
-from lib.fastapi.error_string import get_post_not_found, get_user_not_found
-from lib.fastapi.custom_enums import FilterDates
+from lib.fastapi.custom_exceptions import NotFoundException, BadRequestException
+from lib.fastapi.error_string import get_post_not_found, get_user_not_found, get_post_not_reported
+from lib.fastapi.custom_enums import FilterDates, Environment
 from src.infrastructure.file_upload.services import Boto3Service
 from src.infrastructure.email_service.services import SendgridService
 from src.setup.config.settings import settings
@@ -39,7 +39,6 @@ class PostNotificationEmailService(SendgridService):
 
     def send_email_for_post_notification(self, user: User, post_ids: List[uuid.UUID]):
         """send email for post notifications"""
-        print(user.base_user.email)
         self._send_template_email(
             sender=settings.POST_NOTIFICATION_SENDER,
             receivers=[{"email": user.base_user.email, "name": user.username}],
@@ -139,8 +138,8 @@ class PostAppService:
         if not db_post:
             # return None
             raise NotFoundException(get_post_not_found())
-        # if db_post.report is None:
-        #     return BadRequestException(get_post_not_reported())
+        if db_post.report is None:
+            return BadRequestException(get_post_not_reported())
         # send email to post owners
         base_user_app_service = BaseUserAppService(session=self.db_session)
         base_user = base_user_app_service.get_base_user_by_user_id(
@@ -148,7 +147,8 @@ class PostAppService:
         )
         if not base_user:
             raise NotFoundException(get_user_not_found())
-        ReportedPostEmailService().send_email_for_reported_post(user=base_user)
+        if settings.ENVIRONMENT != Environment.TESTING.value:
+            ReportedPostEmailService().send_email_for_reported_post(user=base_user)
         self.delete_post(db_post=db_post)
 
     def get_posts_to_schedule(self, user_id: uuid.UUID) -> List[uuid.UUID]:
@@ -168,4 +168,6 @@ class PostAppService:
             post_ids:
                 posts to share with the user
         """
-        PostNotificationEmailService().send_email_for_post_notification(user=user, post_ids=post_ids)
+        if settings.ENVIRONMENT != Environment.TESTING.value:
+            PostNotificationEmailService().send_email_for_post_notification(user=user, post_ids=post_ids)
+        return None

@@ -7,11 +7,14 @@ from pydantic_settings import BaseSettings
 from pydantic_extra_types.timezone_name import TimeZoneName 
 from pydantic import EmailStr
 
+from lib.fastapi.custom_enums import Environment
+
 load_dotenv("env/.env")
 
 
 class Config(BaseSettings):
     """secrets and constants from env file to use in the codebase"""
+    ENVIRONMENT:Environment = os.getenv("ENVIRONMENT")
     BASE_URL:str = os.getenv("BASE_URL")
     TIMEZONE:TimeZoneName = os.getenv("TIMEZONE")
 
@@ -58,6 +61,7 @@ class Config(BaseSettings):
     AWS_SECRET_KEY_ID:str = os.getenv("AWS_SECRET_KEY")
     AWS_S3_REGION_NAME:str = os.getenv("AWS_S3_REGION_NAME")
     PRESIGNED_URL_TIME:dict = ast.literal_eval(os.getenv("PRESIGNED_URL_TIME"))
+    TEST_AWS_BUCKET_NAME:str = os.getenv("TEST_AWS_BUCKET_NAME")
 
     POST_PAGINATION_SIZE:int = int(os.getenv("POST_PAGINATION_SIZE"))
     POST_COUNT_TO_NOTIFY:int = int(os.getenv("POST_COUNT_TO_NOTIFY"))
