@@ -14,8 +14,6 @@ from src.tests.test_fixtures import (
 from src.tests.test_data import create_private_user, create_public_user
 from src.tests.test_utils import create_session, get_auth_header, get_user_by_token
 from lib.fastapi.custom_enums import ReportReason
-from src.application.users.services import JWTService
-from src.domain.models import User
 
 
 def test_report_post(before_create_private_user_login_cred, before_create_post):
