@@ -5,9 +5,7 @@ from src.setup.config.database import SessionDep
 from src.interface.auth.dependencies import AuthDep
 from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
 from lib.fastapi.utils import check_id, only_admin_access, only_own_access
-from lib.fastapi.error_string import get_admin_not_created
-from lib.fastapi.custom_exceptions import NotFoundException
-from .schemas import AdminResponseData, DeleteAdminResponseData
+from .schemas import DeleteAdminResponseData
 from src.application.users.admins.services import AdminAppService
 
 from src.interface.posts.reported_posts.schemas import ReportPostListResponseData, ReportPostDeletedResponseData
@@ -85,7 +83,7 @@ def get_reported_posts(current_user:AuthDep, session:SessionDep):
     reported_posts = report_post_app_service.get_all_reported_posts()
     return {"data": reported_posts}
 
-@router.delete("/reported_posts/{id}/", status_code=HTTP_200_OK, response_model=ReportPostDeletedResponseData)
+@router.delete("/reported_posts/{post_id}/", status_code=HTTP_200_OK, response_model=ReportPostDeletedResponseData)
 def delete_reported_post(current_user:AuthDep, post_id:str, session:SessionDep):
     """delete reported post by getting post_id"""
     only_admin_access(current_user=current_user)
