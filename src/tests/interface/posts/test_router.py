@@ -14,7 +14,7 @@ from src.tests.test_fixtures import (
     before_create_post_caption_search,
 )
 from src.tests.test_data import create_public_user, create_private_user, get_username
-from src.tests.test_utils import create_session, get_auth_header
+from src.tests.test_utils import create_session, get_auth_header, get_user_by_token
 from src.domain.models import BaseUser, User, Post
 from src.application.users.services import JWTService
 from src.setup.config.settings import settings
@@ -62,12 +62,11 @@ def test_list_posts_for_private_user_that_is_followed(
 ):
     session = create_session()
     token = before_create_public_user_login_cred(session=session)
-    payload = JWTService().decode(token)
-    base_user = session.get(BaseUser, payload.get("id"))
+    user = get_user_by_token(session=session, token=token)
     post = before_create_post(session=session, user_dict=create_private_user())
     user1 = session.get(User, post.posted_by)
     before_create_approved_follow_requests(
-        session=session, follower_id=base_user.user.id, following_id=user1.id
+        session=session, follower_id=user.id, following_id=user1.id
     )
     response = client.get(
         f"/posts/{user1.username}/", headers=get_auth_header(token=token)
@@ -211,10 +210,7 @@ def test_create_post_without_caption(before_create_public_user_login_cred):
 def test_update_post(before_create_public_user_login_cred, before_create_post):
     session = create_session()
     token = before_create_public_user_login_cred(session=session)
-    payload = JWTService().decode(token)
-    user = session.scalars(
-        select(User).where(User.base_user_id == payload.get("id"))
-    ).first()
+    user = get_user_by_token(session=session, token=token)
     post = before_create_post(
         session=session,
         user_dict={
@@ -251,10 +247,7 @@ def test_update_post_without_caption(
 ):
     session = create_session()
     token = before_create_public_user_login_cred(session=session)
-    payload = JWTService().decode(token)
-    user = session.scalars(
-        select(User).where(User.base_user_id == payload.get("id"))
-    ).first()
+    user = get_user_by_token(session=session, token=token)
     post = before_create_post(
         session=session,
         user_dict={
@@ -303,10 +296,7 @@ def test_update_post_of_another_user(
 def test_delete_post(before_create_public_user_login_cred, before_create_post):
     session = create_session()
     token = before_create_public_user_login_cred(session=session)
-    payload = JWTService().decode(token)
-    user = session.scalars(
-        select(User).where(User.base_user_id == payload.get("id"))
-    ).first()
+    user = get_user_by_token(session=session, token=token)
     post = before_create_post(
         session=session,
         user_dict={

@@ -16,7 +16,7 @@ from src.tests.test_fixtures import (
 from src.tests.test_utils import (
     create_session,
     get_auth_header,
-    create_value_using_session,
+    get_user_by_token
 )
 from src.tests.test_data import create_private_user, create_public_user
 from src.application.users.services import JWTService
@@ -424,14 +424,8 @@ def test_follow_send_request_to_private_user_then_accept_request_and_unfollow(
     session = create_session()
     token1 = before_create_public_user_login_cred(session=session)
     token2 = before_create_private_user_login_cred(session=session)
-    payload1 = JWTService().decode(token=token1)
-    payload2 = JWTService().decode(token=token2)
-    user1 = session.scalars(
-        select(User).where(User.base_user_id == payload1.get("id"))
-    ).first()
-    user2 = session.scalars(
-        select(User).where(User.base_user_id == payload2.get("id"))
-    ).first()
+    user1 = get_user_by_token(session=session, token=token1)
+    user2 = get_user_by_token(session=session, token=token2)
     response = client.post(
         "/follow/send/",
         headers=get_auth_header(token=token1),
@@ -472,14 +466,8 @@ def test_follow_send_request_to_private_user_then_reject_request(
     session = create_session()
     token1 = before_create_public_user_login_cred(session=session)
     token2 = before_create_private_user_login_cred(session=session)
-    payload1 = JWTService().decode(token=token1)
-    payload2 = JWTService().decode(token=token2)
-    user1 = session.scalars(
-        select(User).where(User.base_user_id == payload1.get("id"))
-    ).first()
-    user2 = session.scalars(
-        select(User).where(User.base_user_id == payload2.get("id"))
-    ).first()
+    user1 = get_user_by_token(session=session, token=token1)
+    user2 = get_user_by_token(session=session, token=token2)
     response = client.post(
         "/follow/send/",
         headers=get_auth_header(token=token1),
