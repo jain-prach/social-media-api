@@ -35,24 +35,29 @@ class ReportReason(str, Enum):
     OTHER = "other"
 
 class ServiceModel(str, Enum):
+    """enum for selecting payment service model"""
     SUBSCRIPTION = "subscription"
     PRODUCT = "product"
 
 class TransactionStatus(str, Enum):
+    """enum for selecting transaction status"""
     PROCESSING = "processing"
     COMPLETED = "completed"
 
 class SubscriptionInterval(str, Enum):
+    """enum for selecting payment subscription interval"""
     YEARLY = "yearly"
     MONTHLY = "monthly"
     DAILY = "daily"
 
 class PriceModel(int, Enum):
+    """enum for selecting price model"""
     YEARLY = 400
     MONTHLY = 100
     DAILY = 20
 
 class Environment(str, Enum):
+    """enum for selecting environment"""
     DEVELOPMENT = "development"
     TESTING = "testing"
     STAGING = "staging"

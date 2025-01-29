@@ -5,7 +5,6 @@ from src.tests.test_fixtures import (
     before_user_login_cred,
     before_admin_login_cred,
     before_create_base_user,
-    before_create_base_user_admin,
     before_create_normal_user,
     before_create_public_user_login_cred,
     before_create_private_user_login_cred,

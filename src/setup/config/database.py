@@ -10,10 +10,12 @@ sqlite_url = settings.DATABASE_URL
 
 engine = create_engine(url=sqlite_url)
 
+
 def get_session():
     """create session"""
     with Session(engine) as session:
         yield session
+
 
 SessionDep = Annotated[Session, Depends(get_session)]
 

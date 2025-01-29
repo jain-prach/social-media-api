@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional, List
+from typing import Optional, Sequence
 from datetime import datetime, timedelta
 
 from passlib.context import CryptContext
@@ -12,7 +12,6 @@ from src.domain.users.services import BaseUserService, OtpService
 from src.interface.auth.schemas import Login
 from src.interface.users.schemas import (
     CreateBaseUser,
-    UpdateBaseUser
 )
 from src.infrastructure.email_service.services import SendgridService
 from src.infrastructure.auth_service.services import JWTService
@@ -94,7 +93,7 @@ class BaseUserAppService:
         """get base user by user id"""
         return self.base_user_service.get_base_user_by_user_id(user_id=user_id)
 
-    def get_all_base_users(self) -> List[BaseUser]:
+    def get_all_base_users(self) -> Sequence[BaseUser]:
         """returns list of all base users"""
         return self.base_user_service.get_all_base_users()
 

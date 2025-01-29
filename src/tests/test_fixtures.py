@@ -38,8 +38,8 @@ from lib.fastapi.custom_enums import (
 
 
 @pytest.fixture(scope="function")
-def before_create_base_user() -> BaseUser:
-    def create_base_user(session: Session, user_dict: dict):
+def before_create_base_user():
+    def create_base_user(session: Session, user_dict: dict) -> BaseUser:
         user_dict["password"] = PasswordService().get_hashed_password(
             user_dict["password"]
         )
@@ -52,7 +52,7 @@ def before_create_base_user() -> BaseUser:
 
 @pytest.fixture(scope="function")
 def before_create_otp(before_create_base_user):
-    def create_otp(session: Session):
+    def create_otp(session: Session) -> Otp:
         user = before_create_base_user(session=session, user_dict=create_user())
         db_otp = Otp.model_validate({"base_user_id": user.id})
         create_value_using_session(session=session, value=db_otp)
@@ -63,7 +63,7 @@ def before_create_otp(before_create_base_user):
 
 @pytest.fixture(scope="function")
 def before_create_otp_token(before_create_otp):
-    def create_otp_token(session: Session):
+    def create_otp_token(session: Session) -> str:
         otp = before_create_otp(session=session)
         otp_token = JWTService().create_access_token(
             data={"id": str(otp.base_user.id), "otp": otp.otp},
@@ -74,22 +74,22 @@ def before_create_otp_token(before_create_otp):
     return create_otp_token
 
 
+# @pytest.fixture(scope="function")
+# def before_create_base_user_admin():
+#     def create_base_user(session: Session, user_dict: dict) -> BaseUser:
+#         user_dict["password"] = PasswordService().get_hashed_password(
+#             user_dict["password"]
+#         )
+#         db_user = BaseUser.model_validate(user_dict)
+#         create_value_using_session(session=session, value=db_user)
+#         return db_user
+
+#     return create_base_user
+
+
 @pytest.fixture(scope="function")
-def before_create_base_user_admin() -> BaseUser:
-    def create_base_user(session: Session, user_dict: dict):
-        user_dict["password"] = PasswordService().get_hashed_password(
-            user_dict["password"]
-        )
-        db_user = BaseUser.model_validate(user_dict)
-        create_value_using_session(session=session, value=db_user)
-        return db_user
-
-    return create_base_user
-
-
-@pytest.fixture(scope="function")
-def before_admin_login_cred(before_create_base_user) -> str:
-    def admin_login_cred(session: Session):
+def before_admin_login_cred(before_create_base_user):
+    def admin_login_cred(session: Session) -> str:
         db_base_user = before_create_base_user(
             session=session, user_dict=create_admin()
         )
@@ -105,8 +105,8 @@ def before_admin_login_cred(before_create_base_user) -> str:
 
 
 @pytest.fixture(scope="function")
-def before_user_login_cred(before_create_base_user) -> str:
-    def user_login_cred(session: Session):
+def before_user_login_cred(before_create_base_user):
+    def user_login_cred(session: Session) -> str:
         db_base_user = before_create_base_user(session=session, user_dict=create_user())
         login_token = JWTService().create_access_token(
             data={"id": str(db_base_user.id), "role": db_base_user.role.value},
@@ -118,8 +118,8 @@ def before_user_login_cred(before_create_base_user) -> str:
 
 
 @pytest.fixture(scope="function")
-def before_create_normal_user(before_create_base_user) -> str:
-    def create_normal_user_fixture(session: Session, user_dict: dict):
+def before_create_normal_user(before_create_base_user):
+    def create_normal_user_fixture(session: Session, user_dict: dict) -> str:
         db_base_user = before_create_base_user(session=session, user_dict=create_user())
         with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
             profile = UploadFile(f)
@@ -141,7 +141,7 @@ def before_create_normal_user(before_create_base_user) -> str:
 
 @pytest.fixture(scope="function")
 def before_create_public_user_login_cred(before_create_normal_user):
-    def create_public_user_login_cred(session: Session):
+    def create_public_user_login_cred(session: Session) -> str:
         db_user = before_create_normal_user(
             session=session, user_dict=create_public_user()
         )
@@ -159,7 +159,7 @@ def before_create_public_user_login_cred(before_create_normal_user):
 
 @pytest.fixture(scope="function")
 def before_create_private_user_login_cred(before_create_normal_user):
-    def create_private_user_login_cred(session: Session):
+    def create_private_user_login_cred(session: Session) -> str:
         db_user = before_create_normal_user(
             session=session, user_dict=create_private_user()
         )
@@ -220,7 +220,7 @@ def before_create_post(before_create_normal_user):
 
 @pytest.fixture(scope="function")
 def before_create_post_with_different_timestamp(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
+    def create_post(session: Session, user_dict: dict) -> Post:
         db_user = session.scalars(
             select(User).where(User.username == user_dict["username"])
         ).first()
@@ -267,7 +267,7 @@ def before_create_post_with_different_timestamp(before_create_normal_user):
 
 @pytest.fixture(scope="function")
 def before_create_post_caption_search(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
+    def create_post(session: Session, user_dict: dict) -> Post:
         db_user = session.scalars(
             select(User).where(User.username == user_dict["username"])
         ).first()
@@ -308,7 +308,7 @@ def before_create_post_caption_search(before_create_normal_user):
 
 @pytest.fixture(scope="function")
 def before_create_post_with_different_timestamp(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
+    def create_post(session: Session, user_dict: dict) -> Post:
         db_user = session.scalars(
             select(User).where(User.username == user_dict["username"])
         ).first()
@@ -355,7 +355,7 @@ def before_create_post_with_different_timestamp(before_create_normal_user):
 
 @pytest.fixture(scope="function")
 def before_create_post_caption_search(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
+    def create_post(session: Session, user_dict: dict) -> Post:
         db_user = session.scalars(
             select(User).where(User.username == user_dict["username"])
         ).first()
@@ -398,7 +398,7 @@ def before_create_post_caption_search(before_create_normal_user):
 def before_create_follow_request():
     def create_follow_request(
         session: Session, follower_id: uuid.UUID, following_id: uuid.UUID
-    ):
+    ) -> FollowersModel:
         db_following = session.get(User, following_id)
         db_follow = FollowersModel.model_validate(
             {
@@ -419,7 +419,7 @@ def before_create_follow_request():
 def before_create_approved_follow_requests(before_create_normal_user):
     def create_follow_request(
         session: Session, follower_id: uuid.UUID, following_id: uuid.UUID
-    ):
+    ) -> FollowersModel:
         db_follow = FollowersModel.model_validate(
             {
                 "follower_id": follower_id,
@@ -453,7 +453,7 @@ def before_create_approved_follow_requests(before_create_normal_user):
 @pytest.fixture(scope="function")
 def before_create_private_user_with_followers(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> str:
     def create_private_user_with_followers(session: Session):
         user = before_create_normal_user(
             session=session, user_dict=create_private_user()
@@ -473,7 +473,7 @@ def before_create_private_user_with_followers(
 @pytest.fixture(scope="function")
 def before_create_public_user_with_followers(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> str:
     def create_public_user_with_followers(session: Session):
         user = before_create_normal_user(
             session=session, user_dict=create_public_user()
@@ -493,7 +493,7 @@ def before_create_public_user_with_followers(
 @pytest.fixture(scope="function")
 def before_create_private_user_with_following(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> str:
     def create_private_user_with_following(session: Session):
         user = before_create_normal_user(
             session=session, user_dict=create_private_user()
@@ -513,7 +513,7 @@ def before_create_private_user_with_following(
 @pytest.fixture(scope="function")
 def before_create_public_user_with_following(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> str:
     def create_public_user_with_following(session: Session):
         user = before_create_normal_user(
             session=session, user_dict=create_public_user()
@@ -533,7 +533,7 @@ def before_create_public_user_with_following(
 @pytest.fixture(scope="function")
 def before_create_follow(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> FollowersModel:
     def create_follow(session: Session):
         user1 = before_create_normal_user(
             session=session, user_dict=create_private_user()

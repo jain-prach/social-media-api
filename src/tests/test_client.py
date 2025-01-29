@@ -14,13 +14,15 @@ from lib.fastapi.custom_enums import Environment
 
 settings.ENVIRONMENT = Environment.TESTING.value
 
-TEST_DATABASE_URL = settings.TEST_DATABASE_URL 
+TEST_DATABASE_URL = settings.TEST_DATABASE_URL
 
 test_engine = create_engine(url=TEST_DATABASE_URL)
+
 
 def override_get_session():
     with Session(test_engine) as session:
         yield session
+
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_database():
@@ -33,6 +35,7 @@ def setup_database():
     close_all_sessions()
     Boto3Service().delete_bucket(bucket_name=settings.TEST_AWS_BUCKET_NAME)
     SQLModel.metadata.drop_all(test_engine)
+
 
 app.dependency_overrides[get_session] = override_get_session
 

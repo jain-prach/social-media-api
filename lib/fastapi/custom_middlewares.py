@@ -1,6 +1,6 @@
 from fastapi.responses import JSONResponse
 from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
@@ -24,7 +24,7 @@ class HandleExceptionMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next:RequestResponseEndpoint) -> Response:
         try:
             response = await call_next(request)
             return response
@@ -44,7 +44,7 @@ class HandleExceptionMiddleware(BaseHTTPMiddleware):
                 content={"message": e.detail, "success": False, "data": {"message": e.detail}},
             )
         except Exception as e:
-            print("*****", e)
+            # print("*****", e)
             return JSONResponse(
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"message": f"{e}", "success": False, "data": {"message": str(e)}},

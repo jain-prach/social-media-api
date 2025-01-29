@@ -8,6 +8,7 @@ def get_user_not_found() -> str:
 def get_password_value_error() -> str:
     return "Min length(8) and Password must contain at least one lower character, one upper character, digit and special symbol"
 
+
 def get_username_value_error() -> str:
     return "Min length(3), Max length(32), Username cannot include spaces and symbols other than . or _"
 
@@ -38,6 +39,7 @@ def get_git_email_not_found() -> str:
 
 def get_otp_link_expired() -> str:
     return "Otp link expired! Generate new."
+
 
 def get_invalid_otp_token() -> str:
     return "Otp token invalid!"
@@ -82,11 +84,14 @@ def get_admin_not_allowed() -> str:
 def get_send_request_to_yourself() -> str:
     return "A user cannot follow themselves"
 
+
 def get_accept_request_for_no_follower() -> str:
     return "No follow request found to accept by this username"
 
+
 def get_reject_request_for_no_follower() -> str:
     return "Not follow request found to reject by this username"
+
 
 def get_request_already_sent() -> str:
     return "Request already sent!"
@@ -95,26 +100,36 @@ def get_request_already_sent() -> str:
 def get_post_not_found() -> str:
     return "Post not found!"
 
+
 def get_post_already_liked() -> str:
     return "Post already liked!"
 
+
 def get_post_reported_once() -> str:
-    return "You have already reported the post! We will look into it and get back to you!"
+    return (
+        "You have already reported the post! We will look into it and get back to you!"
+    )
+
 
 def get_post_not_reported() -> str:
     return "Post not reported yet and hence, not allowed to delete!"
 
+
 def get_reporting_own_post() -> str:
     return "You cannot report your own post, we suggest you to delete instead!"
+
 
 def get_user_is_private() -> str:
     return "This is an private user. You must follow to access their contents."
 
+
 def get_subscription_already_created() -> str:
     return "Subscription already exists, we suggest you to update!"
 
+
 def get_transaction_not_created() -> str:
     return "Transaction not found!"
+
 
 def get_user_not_subscribed() -> str:
     return "Please subscribe to access this url!"

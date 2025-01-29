@@ -20,10 +20,14 @@ disable_installed_extensions_check()
 
 app = FastAPI()
 
+
 def pydantic_exception_handler(request: Request, exc: RequestValidationError):
     return get_pydantic_error_response(e=exc)
 
-app.add_exception_handler(exc_class_or_status_code=RequestValidationError, handler=pydantic_exception_handler)
+
+app.add_exception_handler(
+    exc_class_or_status_code=RequestValidationError, handler=pydantic_exception_handler
+)
 
 app.add_middleware(HandleExceptionMiddleware)
 app.include_router(auth_router)
@@ -37,6 +41,7 @@ app.include_router(comments_router)
 app.include_router(report_post_router)
 app.include_router(subscription_router)
 
+
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -46,9 +51,10 @@ def custom_openapi():
         summary="Social Media API with authentication, payment, profile upload, user following and post upload",
         routes=app.routes,
     )
-    #customize here
+    # customize here
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
 
 app.openapi = custom_openapi
 # print(app.openapi()["paths"]["/user/"]['put']["requestBody"]["content"]["multipart/form-data"]["schema"])

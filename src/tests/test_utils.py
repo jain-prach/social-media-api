@@ -1,26 +1,36 @@
+from typing import Optional
+
 from sqlmodel import Session, select
+from pydantic import BaseModel
 
 from src.tests.test_client import override_get_session
 from src.domain.models import User
 from src.application.users.services import JWTService
 
+
 def create_session() -> Session:
     session = list(override_get_session())[0]
     return session
 
-def create_value_using_session(session:Session, value):
+
+def create_value_using_session(session: Session, value: BaseModel) -> BaseModel:
     session.add(value)
     session.commit()
     session.refresh(value)
     return value
 
-def get_auth_header(token:str) -> dict:
-    return {'Authorization': f"Bearer {token}"}
 
-def get_user_by_token(session:Session, token:str) -> User:
+def get_auth_header(token: str) -> dict:
+    return {"Authorization": f"Bearer {token}"}
+
+
+def get_user_by_token(session: Session, token: str) -> Optional[User]:
     payload = JWTService().decode(token=token)
-    user = session.scalars(select(User).where(User.base_user_id == payload.get("id"))).first()
+    user = session.scalars(
+        select(User).where(User.base_user_id == payload.get("id"))
+    ).first()
     return user
+
 
 # def create_user_when_not_created(session:Session, user_dict:dict):
 #     user = session.scalars(

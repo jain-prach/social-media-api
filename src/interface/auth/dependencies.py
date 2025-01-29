@@ -17,7 +17,7 @@ class CustomHTTPBearer(HTTPBearer):
     def __init__(self):
         super().__init__()
 
-    async def __call__(self, request: Request) -> dict:
+    async def __call__(self, request: Request):
         authorization = request.headers.get("Authorization")
         scheme, credentials = get_authorization_scheme_param(authorization)
         if not (authorization and scheme and credentials):

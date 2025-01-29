@@ -13,15 +13,7 @@ from starlette.status import (
 
 
 class CustomException(Exception):
-    """
-    custom exception for API
-
-    Attributes
-        status_code: Optional[int]
-            response status code that defines error
-        detail: Optional[str]
-            any details regarding the error 
-    """
+    """custom exception for API"""
     def __init__(
         self,
         status_code: Optional[int] = HTTP_500_INTERNAL_SERVER_ERROR,

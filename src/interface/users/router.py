@@ -40,7 +40,7 @@ def get_base_user(
     """access base user details by id - only Admin access"""
     only_admin_access(current_user=current_user)
     base_user_app_service = BaseUserAppService(session)
-    data.id = check_id(id=data.id)
+    data.id = check_id(id=str(data.id))
     user = base_user_app_service.get_base_user_by_id(id=data.id)
     if not user:
         raise NotFoundException(get_user_not_found())

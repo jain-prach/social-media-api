@@ -4,8 +4,10 @@ from lib.fastapi.custom_enums import Role, ProfileType
 
 fake = Faker()
 
+
 def get_username():
     return fake.user_name()
+
 
 def create_admin():
     return {
@@ -14,6 +16,7 @@ def create_admin():
         "password": "Practice@123",
     }
 
+
 def create_user():
     return {
         "email": fake.email(),
@@ -21,11 +24,10 @@ def create_user():
         "password": "Practice@123",
     }
 
-def created_user(email:str):
-    return {
-        "email": email,
-        "password": "Practice@123"
-    }
+
+def created_user(email: str):
+    return {"email": email, "password": "Practice@123"}
+
 
 def created_user_login_invalid_password(email):
     return {
@@ -33,13 +35,15 @@ def created_user_login_invalid_password(email):
         "password": "invalid",
     }
 
-weak_password = {"email": fake.email(), "password": "weak", "role":Role.ADMIN}
-invalid_role = {"email": fake.email(), "password": "weak", "role":"invalid"}
-no_password = {"email": fake.email(), "role":Role.ADMIN}
+
+weak_password = {"email": fake.email(), "password": "weak", "role": Role.ADMIN}
+invalid_role = {"email": fake.email(), "password": "weak", "role": "invalid"}
+no_password = {"email": fake.email(), "role": Role.ADMIN}
 no_role = {"email": fake.email(), "password": "Practice@123"}
-no_email = {"password": "Practice@123", "role":Role.ADMIN}
+no_email = {"password": "Practice@123", "role": Role.ADMIN}
 
 invalid_login = {"email": fake.email(), "password": "invalid"}
+
 
 def admin_registration_wrong_email():
     return {
@@ -48,6 +52,7 @@ def admin_registration_wrong_email():
         "password": "Practice@123",
     }
 
+
 def user_registration_wrong_email():
     return {
         "email": "invalid",
@@ -55,12 +60,14 @@ def user_registration_wrong_email():
         "password": "Practice@123",
     }
 
+
 def create_public_user():
     return {
         "username": fake.user_name(),
         "bio": fake.text(max_nb_chars=20),
         "profile_type": ProfileType.PUBLIC,
     }
+
 
 def create_private_user():
     return {

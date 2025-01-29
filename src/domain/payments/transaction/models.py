@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class Transaction(BaseModel, table=True):
-    """Transaction model for tracking payments"""
+    """:model: Transaction model for tracking payments"""
 
     payment_id: str = Field(index=True)
     user_id: uuid.UUID = Field(index=True, foreign_key="user.id", ondelete="CASCADE")

@@ -4,7 +4,7 @@ from sqlmodel import select
 
 from src.domain.models import BaseUser
 from src.tests.test_client import client, setup_database
-from src.tests.test_fixtures import before_create_base_user_admin, before_create_base_user, before_admin_login_cred, before_user_login_cred
+from src.tests.test_fixtures import before_create_base_user, before_admin_login_cred, before_user_login_cred
 from src.tests.test_utils import create_session, get_auth_header
 from src.tests.test_data import create_admin, create_user
 
@@ -18,10 +18,10 @@ def test_list_base_users(before_admin_login_cred, before_create_base_user):
     assert response.status_code == 200
     assert len(data) == 2
 
-def test_list_base_users_with_user_login(before_user_login_cred, before_create_base_user_admin, before_create_base_user):
+def test_list_base_users_with_user_login(before_user_login_cred, before_create_base_user):
     session = create_session()
     token = before_user_login_cred(session)
-    before_create_base_user_admin(session=session, user_dict=create_admin())
+    before_create_base_user(session=session, user_dict=create_admin())
     before_create_base_user(session=session, user_dict=create_user())
     response = client.get("/base-users/", headers=get_auth_header(token))
     data = response.json()["data"]

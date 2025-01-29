@@ -14,11 +14,11 @@ class FollowersModel(BaseModel, table=True):
     """
     :model: for follower and following list management
     """
-    
+
     __table_args__ = (
         UniqueConstraint("follower_id", "following_id", name="RequestSent"),
     )
-    
+
     follower_id: uuid.UUID = Field(foreign_key="user.id", ondelete="CASCADE")
     following_id: uuid.UUID = Field(foreign_key="user.id", ondelete="CASCADE")
     status: StatusType = Field(
