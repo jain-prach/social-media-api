@@ -38,13 +38,13 @@ def test_list_received_requests(
     before_create_follow_request(
         session=session, follower_id=user2.id, following_id=db_user.user.id
     )
-    session.close()
     response = client.get(
         "/follow-requests/received/", headers=get_auth_header(token=token)
     )
     data = response.json()["data"]
     assert response.status_code == 200
     assert len(data) == 2
+    session.close()
 
 
 def test_list_received_requests_with_unauthorized_access():

@@ -1,7 +1,7 @@
 import uuid
 
 import pytest
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 from pydantic import ValidationError
 # from psycopg2.errors import ForeignKeyViolation
 
@@ -68,6 +68,15 @@ def test_get_user_by_base_user_id_for_invalid_user():
     assert db_user is None
 
 
+def test_get_user_by_base_user_id_for_no_user_created(before_create_base_user):
+    session = create_session()
+    base_user = before_create_base_user(session=session, user_dict=create_user())
+    db_user = UserService(session=session).get_user_by_base_user_id(
+        base_user_id=base_user.id
+    )
+    assert db_user is None
+
+
 def test_get_all_users(before_create_normal_user):
     session = create_session()
     before_create_normal_user(session=session, user_dict=create_private_user())
@@ -123,6 +132,22 @@ def test_create_with_invalid_base_user_id():
                 "profile_type": ProfileType.PRIVATE.value,
                 "profile": "object_key",
                 "base_user_id": uuid.uuid4(),
+            }
+        )
+    session.close()
+
+
+def test_create_with_invalid_profile_type(before_create_base_user):
+    session = create_session()
+    db_base_user = before_create_base_user(session=session, user_dict=create_user())
+    with pytest.raises(ValidationError):
+        UserService(session=session).create(
+            user={
+                "username": get_username(),
+                "bio": "randomtext",
+                "profile_type": "invalid",
+                "profile": "object_key",
+                "base_user_id": db_base_user.id,
             }
         )
     session.close()
@@ -254,6 +279,22 @@ def test_update_with_invalid_base_user_id(before_create_normal_user):
         )
 
 
+def test_update_with_invalid_profile_type(before_create_normal_user):
+    session = create_session()
+    db_user = before_create_normal_user(session=session, user_dict=create_public_user())
+    with pytest.raises(DataError):
+        UserService(session=session).update(
+            user={
+                "username": get_username(),
+                "bio": "randomtext",
+                "profile_type": "invalid",
+                "profile": "object_key",
+                "base_user_id": db_user.base_user_id,
+            },
+            db_user=db_user,
+        )
+
+
 def test_update_with_existing_base_user_id(before_create_normal_user):
     session = create_session()
     db_user = before_create_normal_user(session=session, user_dict=create_public_user())
@@ -269,6 +310,7 @@ def test_update_with_existing_base_user_id(before_create_normal_user):
             },
             db_user=db_user,
         )
+
 
 def test_update_without_username(before_create_normal_user):
     session = create_session()
@@ -287,6 +329,7 @@ def test_update_without_username(before_create_normal_user):
     assert user.profile == user_dict.get("profile")
     assert user.username == db_user.username
 
+
 def test_update_without_bio(before_create_normal_user):
     session = create_session()
     db_user = before_create_normal_user(session=session, user_dict=create_public_user())
@@ -303,6 +346,7 @@ def test_update_without_bio(before_create_normal_user):
     assert user.username == user_dict.get("username")
     assert user.profile == user_dict.get("profile")
     assert user.bio == db_user.bio
+
 
 def test_update_without_profile_type(before_create_normal_user):
     session = create_session()
@@ -321,6 +365,7 @@ def test_update_without_profile_type(before_create_normal_user):
     assert user.profile == user_dict.get("profile")
     assert user.profile_type == db_user.profile_type
 
+
 def test_update_without_profile(before_create_normal_user):
     session = create_session()
     db_user = before_create_normal_user(session=session, user_dict=create_public_user())
@@ -337,6 +382,7 @@ def test_update_without_profile(before_create_normal_user):
     assert user.username == user_dict.get("username")
     assert user.bio == user_dict.get("bio")
     assert user.profile == db_user.profile
+
 
 def test_update_without_base_user_id(before_create_normal_user):
     session = create_session()

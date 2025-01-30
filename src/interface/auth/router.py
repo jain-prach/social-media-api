@@ -29,7 +29,7 @@ def register(user: CreateBaseUser, session: SessionDep):
     """create base user for site access"""
     db_user = BaseUserAppService(session).create_base_user(user)
     return {
-        "message": "New user created",
+        "message": "New user created successfully",
         "success": True,
         "data": db_user,
     }
@@ -56,7 +56,7 @@ def login(user: Login, session: SessionDep):
 @router.post(
     "/forgot-password/",
     status_code=HTTP_200_OK,
-    response_model=ForgotPasswordResponseData
+    response_model=ForgotPasswordResponseData,
 )
 def forgot_password(user: ForgotPassword, session: SessionDep):
     """forgot password for existing base user email"""
@@ -66,9 +66,7 @@ def forgot_password(user: ForgotPassword, session: SessionDep):
 
 
 @router.post(
-    "/verify-otp/",
-    status_code=HTTP_200_OK,
-    response_model=VerifyOtpResponseData
+    "/verify-otp/", status_code=HTTP_200_OK, response_model=VerifyOtpResponseData
 )
 def verify_otp(data: VerifyOtp, session: SessionDep):
     """verify otp and return otp token if verified"""
@@ -80,7 +78,7 @@ def verify_otp(data: VerifyOtp, session: SessionDep):
 @router.post(
     "/reset-password/",
     status_code=HTTP_200_OK,
-    response_model=ResetPasswordResponseData
+    response_model=ResetPasswordResponseData,
 )
 def reset_password(data: ResetPassword, session: SessionDep):
     """reset password for user"""
@@ -94,7 +92,7 @@ def reset_password(data: ResetPassword, session: SessionDep):
 @router.get(
     "/git-authenticate/",
     status_code=HTTP_200_OK,
-    response_model=GitAuthenticateResponseData
+    response_model=GitAuthenticateResponseData,
 )
 def git_authenticate():
     """get github authentication url"""
@@ -102,11 +100,7 @@ def git_authenticate():
     return {"data": dict(url=auth_url)}
 
 
-@router.get(
-    "/git-callback/",
-    status_code=HTTP_200_OK,
-    response_model=LoginResponseData
-)
+@router.get("/git-callback/", status_code=HTTP_200_OK, response_model=LoginResponseData)
 def git_callback(code: str, session: SessionDep):
     """git callback to handle github login for the user"""
     base_user_app_service = BaseUserAppService(session)
@@ -120,7 +114,7 @@ def git_callback(code: str, session: SessionDep):
     access_token = base_user_app_service.create_jwt_token_for_user(
         id=str(user.id), role=user.role
     )
-    
+
     # provide user with access_token
     return {
         "data": dict(

@@ -9,6 +9,7 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 
 from src.application.users.services import JWTService
 from lib.fastapi.error_string import get_access_token_expired
+from lib.fastapi.utils import get_default_timezone
 
 
 class CustomHTTPBearer(HTTPBearer):
@@ -39,7 +40,7 @@ class CustomHTTPBearer(HTTPBearer):
         payload = JWTService().decode(token.credentials)
         if not payload.get("id") or not payload.get("role") or not payload.get("exp"):
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
-        if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
+        if datetime.fromtimestamp(payload.get("exp")) < datetime.now(tz=get_default_timezone()):
             raise HTTPException(
                     status_code=HTTP_401_UNAUTHORIZED,
                     detail=get_access_token_expired(),

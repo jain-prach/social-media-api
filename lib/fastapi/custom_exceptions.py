@@ -8,12 +8,13 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
     HTTP_403_FORBIDDEN,
     HTTP_422_UNPROCESSABLE_ENTITY,
-    HTTP_409_CONFLICT
+    HTTP_409_CONFLICT,
 )
 
 
 class CustomException(Exception):
     """custom exception for API"""
+
     def __init__(
         self,
         status_code: Optional[int] = HTTP_500_INTERNAL_SERVER_ERROR,
@@ -25,6 +26,7 @@ class CustomException(Exception):
 
 class UnauthorizedException(CustomException):
     """raise unauthorized exception"""
+
     def __init__(self, detail: Optional[str] = None) -> None:
         status_code = HTTP_401_UNAUTHORIZED
         super().__init__(status_code, detail)
@@ -32,6 +34,7 @@ class UnauthorizedException(CustomException):
 
 class NotFoundException(CustomException):
     """raise not found exception"""
+
     def __init__(self, detail: Optional[str] = None) -> None:
         status_code = HTTP_404_NOT_FOUND
         super().__init__(status_code, detail)
@@ -39,6 +42,7 @@ class NotFoundException(CustomException):
 
 class BadRequestException(CustomException):
     """raise bad request exception"""
+
     def __init__(self, detail: Optional[str] = None) -> None:
         status_code = HTTP_400_BAD_REQUEST
         super().__init__(status_code, detail)
@@ -46,18 +50,23 @@ class BadRequestException(CustomException):
 
 class ForbiddenException(CustomException):
     """raise forbidden exception"""
+
     def __init__(self, detail: Optional[str] = None) -> None:
         status_code = HTTP_403_FORBIDDEN
         super().__init__(status_code, detail)
 
+
 class CustomValidationError(CustomException):
     """raise custom validation errors"""
-    def __init__(self, detail:Optional[str] = None) -> None:
+
+    def __init__(self, detail: Optional[str] = None) -> None:
         status_code = HTTP_422_UNPROCESSABLE_ENTITY
         super().__init__(status_code, detail)
 
+
 class CustomUniqueConstraintError(CustomException):
     """raise custom unique constraint errors"""
-    def __init__(self, detail:Optional[str] = None) -> None:
+
+    def __init__(self, detail: Optional[str] = None) -> None:
         status_code = HTTP_409_CONFLICT
         super().__init__(status_code, detail)

@@ -1,12 +1,17 @@
 from faker import Faker
 
 from lib.fastapi.custom_enums import Role, ProfileType
+from src.domain.models import User
 
 fake = Faker()
 
 
 def get_username():
     return fake.user_name()
+
+
+def get_email():
+    return fake.email()
 
 
 def create_admin():
@@ -74,4 +79,12 @@ def create_private_user():
         "username": fake.user_name(),
         "bio": fake.text(max_nb_chars=20),
         "profile_type": ProfileType.PRIVATE,
+    }
+
+
+def get_user_dict_from_user(user: User):
+    return {
+        "username": user.username,
+        "bio": user.bio,
+        "profile_type": user.profile_type,
     }
