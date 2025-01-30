@@ -10,8 +10,8 @@ from src.domain.users.users.services import UserService
 from src.interface.users.users.schemas import UserWithProfile, UserWithBaseUserId
 from src.infrastructure.file_upload.services import Boto3Service
 from lib.fastapi.custom_enums import ProfileType, Role, StatusType
-from lib.fastapi.custom_exceptions import ForbiddenException, CustomValidationError
-from lib.fastapi.error_string import get_user_is_private, get_user_not_created
+from lib.fastapi.custom_exceptions import ForbiddenException, CustomValidationError, BadRequestException
+from lib.fastapi.error_string import get_user_is_private, get_user_not_created, get_admin_to_not_create_user
 from lib.fastapi.utils import check_id
 
 class UserAppService:
@@ -43,6 +43,11 @@ class UserAppService:
 
     def create_user(self, user: UserWithBaseUserId | UserWithProfile) -> User:
         """create user"""
+        from src.application.users.services import BaseUserAppService
+        base_user_app_service = BaseUserAppService(session=self.db_session)
+        base_user = base_user_app_service.get_base_user_by_id(id=user.base_user_id)
+        if base_user.role != Role.USER.value:
+            raise BadRequestException(detail=get_admin_to_not_create_user())
         return self.user_service.create(user=user)
 
     def update_user(self, user: UserWithBaseUserId | UserWithProfile) -> User:
@@ -83,15 +88,16 @@ class UserAppService:
         if current_user["role"] != Role.ADMIN.value:
             current_user_id = check_id(id=current_user.get("id"))
             db_user = self.get_user_by_base_user_id(base_user_id=current_user_id)
-            if user.profile_type == ProfileType.PRIVATE.value:
-                followers_user_id = self.get_user_id_of_followers(user=user)
-                # print(user.followers)
-                # print(followers_user_id)
-                # print(db_user)
-                if db_user.id == user.id:
-                    return None
-                if db_user.id not in followers_user_id:
-                    raise ForbiddenException(get_user_is_private())
+            if db_user:
+                if user.profile_type == ProfileType.PRIVATE.value:
+                    followers_user_id = self.get_user_id_of_followers(user=user)
+                    # print(user.followers)
+                    # print(followers_user_id)
+                    # print(db_user)
+                    if db_user.id == user.id:
+                        return None
+                    if db_user.id not in followers_user_id:
+                        raise ForbiddenException(get_user_is_private())
 
     def create_dummy_user(self, base_user_id: uuid.UUID) -> User:
         """create dummy user when base_user is created"""

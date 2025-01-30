@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, Sequence
 import uuid
 
 from sqlmodel import Session, select
@@ -31,11 +31,11 @@ class UserService:
             select(User).where(User.base_user_id == base_user_id)
         ).first()
 
-    def get_all_users(self) -> List[User]:
+    def get_all_users(self) -> Sequence[User]:
         """get all users from the database"""
         return self.db_session.exec(select(User)).all()
 
-    def get_all_public_users(self) -> List[User]:
+    def get_all_public_users(self) -> Sequence[User]:
         """get all users with profile type public from the database"""
         return self.db_session.exec(
             select(User).where(User.profile_type == ProfileType.PUBLIC)

@@ -15,6 +15,6 @@ def handle_media_file_upload(user_id:uuid.UUID, post_id:uuid.UUID, media:List[Up
         # create object_key and upload media
         object_key = f"posts/{user_id}/{post_id}/post_{i}.{get_file_extension}"
         MediaAppService.handle_media_upload(file=file, object_key=object_key)
-        media = MediaSchema(post_id=post_id, media_url=object_key, media_type=file.content_type)
+        media_schema = MediaSchema(post_id=post_id, media_url=object_key, media_type=file.content_type)
         # save urls and types to media
-        MediaAppService(session=session).create_media(media=media)
+        MediaAppService(session=session).create_media(media=media_schema)

@@ -24,7 +24,7 @@ class TransactionService:
             select(Transaction).where(Transaction.user_id == user_id)
         ).first()
 
-    def get_transaction_by_payment_id(self, payment_id: str) -> Transaction:
+    def get_transaction_by_payment_id(self, payment_id: str) -> Optional[Transaction]:
         return self.db_session.scalars(
             select(Transaction).where(Transaction.payment_id == payment_id)
         ).first()
@@ -36,7 +36,7 @@ class TransactionService:
         return db_transaction
 
     def update(
-        self, transaction: Transaction, db_transaction: Transaction
+        self, transaction: TransactionSchema, db_transaction: Transaction
     ) -> Transaction:
         """update transaction in the database"""
         db_transaction.sqlmodel_update(transaction)

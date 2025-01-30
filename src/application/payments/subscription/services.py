@@ -18,7 +18,7 @@ from lib.fastapi.utils import (
     get_price,
     check_id,
 )
-from lib.fastapi.custom_exceptions import BadRequestException, NotFoundException
+from lib.fastapi.custom_exceptions import BadRequestException, NotFoundException, ForbiddenException
 from lib.fastapi.error_string import get_subscription_already_created, get_user_not_subscribed, get_user_not_found
 from src.infrastructure.payment_service.services import StripeService
 from src.setup.config.settings import settings
@@ -97,7 +97,7 @@ class SubscriptionAppService:
         """check whether the user is subscribed"""
         db_subscription = self.subscription_service.get_subscription_by_user_id(user_id=user.id)
         if not db_subscription:
-            raise BadRequestException(get_user_not_subscribed())
+            raise ForbiddenException(get_user_not_subscribed())
         if db_subscription and db_subscription.is_cancelled:
-            raise BadRequestException(get_user_not_subscribed())
+            raise ForbiddenException(get_user_not_subscribed())
         return None

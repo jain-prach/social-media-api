@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from typing import Optional
 
 import uuid
 
@@ -16,6 +17,10 @@ from src.domain.models import (
     FollowersModel,
     Admin,
     ReportPost,
+    Subscription,
+    Transaction,
+    Likes,
+    Comments
 )
 from .test_data import (
     create_user,
@@ -27,12 +32,18 @@ from src.application.users.services import PasswordService, JWTService
 from .test_utils import create_value_using_session
 from src.setup.config.settings import settings
 from src.infrastructure.file_upload.services import Boto3Service
-from lib.fastapi.custom_enums import StatusType, ProfileType, ReportReason
+from lib.fastapi.custom_enums import (
+    StatusType,
+    ProfileType,
+    ReportReason,
+    TransactionStatus,
+)
+from lib.fastapi.utils import get_default_timezone
 
 
 @pytest.fixture(scope="function")
-def before_create_base_user() -> BaseUser:
-    def create_base_user(session: Session, user_dict: dict):
+def before_create_base_user():
+    def create_base_user(session: Session, user_dict: dict) -> BaseUser:
         user_dict["password"] = PasswordService().get_hashed_password(
             user_dict["password"]
         )
@@ -45,7 +56,7 @@ def before_create_base_user() -> BaseUser:
 
 @pytest.fixture(scope="function")
 def before_create_otp(before_create_base_user):
-    def create_otp(session: Session):
+    def create_otp(session: Session) -> Otp:
         user = before_create_base_user(session=session, user_dict=create_user())
         db_otp = Otp.model_validate({"base_user_id": user.id})
         create_value_using_session(session=session, value=db_otp)
@@ -56,33 +67,33 @@ def before_create_otp(before_create_base_user):
 
 @pytest.fixture(scope="function")
 def before_create_otp_token(before_create_otp):
-    def create_otp_token(session: Session):
+    def create_otp_token(session: Session) -> str:
         otp = before_create_otp(session=session)
         otp_token = JWTService().create_access_token(
             data={"id": str(otp.base_user.id), "otp": otp.otp},
-            expire=datetime.now() + timedelta(**settings.OTP_EXPIRE_TIME),
+            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.OTP_EXPIRE_TIME),
         )
         return otp_token
 
     return create_otp_token
 
 
+# @pytest.fixture(scope="function")
+# def before_create_base_user_admin():
+#     def create_base_user(session: Session, user_dict: dict) -> BaseUser:
+#         user_dict["password"] = PasswordService().get_hashed_password(
+#             user_dict["password"]
+#         )
+#         db_user = BaseUser.model_validate(user_dict)
+#         create_value_using_session(session=session, value=db_user)
+#         return db_user
+
+#     return create_base_user
+
+
 @pytest.fixture(scope="function")
-def before_create_base_user_admin() -> BaseUser:
-    def create_base_user(session: Session, user_dict: dict):
-        user_dict["password"] = PasswordService().get_hashed_password(
-            user_dict["password"]
-        )
-        db_user = BaseUser.model_validate(user_dict)
-        create_value_using_session(session=session, value=db_user)
-        return db_user
-
-    return create_base_user
-
-
-@pytest.fixture(scope="function")
-def before_admin_login_cred(before_create_base_user) -> str:
-    def admin_login_cred(session: Session):
+def before_admin_login_cred(before_create_base_user):
+    def admin_login_cred(session: Session) -> str:
         db_base_user = before_create_base_user(
             session=session, user_dict=create_admin()
         )
@@ -90,7 +101,7 @@ def before_admin_login_cred(before_create_base_user) -> str:
         create_value_using_session(session=session, value=db_admin)
         login_token = JWTService().create_access_token(
             data={"id": str(db_base_user.id), "role": db_base_user.role.value},
-            expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
+            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
         )
         return login_token
 
@@ -98,12 +109,25 @@ def before_admin_login_cred(before_create_base_user) -> str:
 
 
 @pytest.fixture(scope="function")
-def before_user_login_cred(before_create_base_user) -> str:
-    def user_login_cred(session: Session):
+def before_create_admin(before_create_base_user):
+    def create_admin_user(session: Session) -> str:
+        db_base_user = before_create_base_user(
+            session=session, user_dict=create_admin()
+        )
+        db_admin = Admin.model_validate({"base_user_id": db_base_user.id})
+        create_value_using_session(session=session, value=db_admin)
+        return db_admin
+
+    return create_admin_user
+
+
+@pytest.fixture(scope="function")
+def before_user_login_cred(before_create_base_user):
+    def user_login_cred(session: Session) -> str:
         db_base_user = before_create_base_user(session=session, user_dict=create_user())
         login_token = JWTService().create_access_token(
             data={"id": str(db_base_user.id), "role": db_base_user.role.value},
-            expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
+            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
         )
         return login_token
 
@@ -111,8 +135,8 @@ def before_user_login_cred(before_create_base_user) -> str:
 
 
 @pytest.fixture(scope="function")
-def before_create_normal_user(before_create_base_user) -> str:
-    def create_normal_user_fixture(session: Session, user_dict: dict):
+def before_create_normal_user(before_create_base_user):
+    def create_normal_user_fixture(session: Session, user_dict: dict) -> str:
         db_base_user = before_create_base_user(session=session, user_dict=create_user())
         with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
             profile = UploadFile(f)
@@ -134,7 +158,7 @@ def before_create_normal_user(before_create_base_user) -> str:
 
 @pytest.fixture(scope="function")
 def before_create_public_user_login_cred(before_create_normal_user):
-    def create_public_user_login_cred(session: Session):
+    def create_public_user_login_cred(session: Session) -> str:
         db_user = before_create_normal_user(
             session=session, user_dict=create_public_user()
         )
@@ -143,7 +167,7 @@ def before_create_public_user_login_cred(before_create_normal_user):
                 "id": str(db_user.base_user.id),
                 "role": db_user.base_user.role.value,
             },
-            expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
+            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
         )
         return login_token
 
@@ -152,7 +176,7 @@ def before_create_public_user_login_cred(before_create_normal_user):
 
 @pytest.fixture(scope="function")
 def before_create_private_user_login_cred(before_create_normal_user):
-    def create_private_user_login_cred(session: Session):
+    def create_private_user_login_cred(session: Session) -> str:
         db_user = before_create_normal_user(
             session=session, user_dict=create_private_user()
         )
@@ -161,7 +185,7 @@ def before_create_private_user_login_cred(before_create_normal_user):
                 "id": str(db_user.base_user.id),
                 "role": db_user.base_user.role.value,
             },
-            expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
+            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
         )
         return login_token
 
@@ -170,15 +194,27 @@ def before_create_private_user_login_cred(before_create_normal_user):
 
 @pytest.fixture(scope="function")
 def before_create_post(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
+    def create_post(
+        session: Session,
+        user_dict: dict,
+        caption: Optional[str] = "caption text",
+        created_at: Optional[datetime] = None,
+    ) -> Post:
         db_user = session.scalars(
             select(User).where(User.username == user_dict["username"])
         ).first()
         if not db_user:
             db_user = before_create_normal_user(session=session, user_dict=user_dict)
-        db_post = Post.model_validate(
-            {"posted_by": db_user.id, "caption": "caption text"}
-        )
+        if created_at:
+            db_post = Post.model_validate(
+                {
+                    "posted_by": db_user.id,
+                    "caption": "caption text",
+                    "created_at": datetime.now(tz=get_default_timezone()) - relativedelta(months=1),
+                }
+            )
+        else:
+            db_post = Post.model_validate({"posted_by": db_user.id, "caption": caption})
         create_value_using_session(session=session, value=db_post)
         with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
             media = [
@@ -206,171 +242,79 @@ def before_create_post(before_create_normal_user):
                 )
                 # save urls and types to media
                 create_value_using_session(session=session, value=db_media)
-        return db_post
-    return create_post
-
-@pytest.fixture(scope="function")
-def before_create_post_with_different_timestamp(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
-        db_user = session.scalars(select(User).where(User.username == user_dict["username"])).first()
-        if not db_user:
-            db_user = before_create_normal_user(session=session, user_dict=user_dict)
-        db_post = Post.model_validate(
-            {"posted_by": db_user.id, "caption": "caption text", "created_at":datetime.now()-relativedelta(months=1)}
-        )
-        create_value_using_session(session=session, value=db_post)
-        with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
-            media = [
-                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
-                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
-            ]
-            for i, file in enumerate(media):
-                get_file_extension = str(file.filename).split(".")[-1]
-                # create object_key and upload media
-                object_key = (
-                    f"posts/{db_user.id}/{db_post.id}/post_{i}.{get_file_extension}"
-                )
-                boto3_service = Boto3Service()
-                boto3_service.upload_file_from_memory(
-                    object_key=object_key,
-                    file_content=file.file,
-                    file_type="image/jpeg",
-                )
-                db_media = Media.model_validate(
-                    {
-                        "post_id": db_post.id,
-                        "media_url": object_key,
-                        "media_type": "image/jpeg",
-                    }
-                )
-                # save urls and types to media
-                create_value_using_session(session=session, value=db_media)
-        return db_post
-    return create_post
-
-@pytest.fixture(scope="function")
-def before_create_post_caption_search(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
-        db_user = session.scalars(select(User).where(User.username == user_dict["username"])).first()
-        if not db_user:
-            db_user = before_create_normal_user(session=session, user_dict=user_dict)
-        db_post = Post.model_validate(
-            {"posted_by": db_user.id, "caption": "search"}
-        )
-        create_value_using_session(session=session, value=db_post)
-        with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
-            media = [
-                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
-                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
-            ]
-            for i, file in enumerate(media):
-                get_file_extension = str(file.filename).split(".")[-1]
-                # create object_key and upload media
-                object_key = (
-                    f"posts/{db_user.id}/{db_post.id}/post_{i}.{get_file_extension}"
-                )
-                boto3_service = Boto3Service()
-                boto3_service.upload_file_from_memory(
-                    object_key=object_key,
-                    file_content=file.file,
-                    file_type="image/jpeg",
-                )
-                db_media = Media.model_validate(
-                    {
-                        "post_id": db_post.id,
-                        "media_url": object_key,
-                        "media_type": "image/jpeg",
-                    }
-                )
-                # save urls and types to media
-                create_value_using_session(session=session, value=db_media)
-        return db_post
-    return create_post
-
-
-@pytest.fixture(scope="function")
-def before_create_post_with_different_timestamp(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
-        db_user = session.scalars(
-            select(User).where(User.username == user_dict["username"])
-        ).first()
-        if not db_user:
-            db_user = before_create_normal_user(session=session, user_dict=user_dict)
-        db_post = Post.model_validate(
-            {
-                "posted_by": db_user.id,
-                "caption": "caption text",
-                "created_at": datetime.now() - relativedelta(months=1),
-            }
-        )
-        create_value_using_session(session=session, value=db_post)
-        with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
-            media = [
-                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
-                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
-            ]
-            for i, file in enumerate(media):
-                get_file_extension = str(file.filename).split(".")[-1]
-                # create object_key and upload media
-                object_key = (
-                    f"posts/{db_user.id}/{db_post.id}/post_{i}.{get_file_extension}"
-                )
-                boto3_service = Boto3Service()
-                boto3_service.upload_file_from_memory(
-                    object_key=object_key,
-                    file_content=file.file,
-                    file_type="image/jpeg",
-                )
-                db_media = Media.model_validate(
-                    {
-                        "post_id": db_post.id,
-                        "media_url": object_key,
-                        "media_type": "image/jpeg",
-                    }
-                )
-                # save urls and types to media
-                create_value_using_session(session=session, value=db_media)
+                session.refresh(db_post)
         return db_post
 
     return create_post
 
 
 @pytest.fixture(scope="function")
-def before_create_post_caption_search(before_create_normal_user):
-    def create_post(session: Session, user_dict: dict):
-        db_user = session.scalars(
-            select(User).where(User.username == user_dict["username"])
-        ).first()
-        if not db_user:
-            db_user = before_create_normal_user(session=session, user_dict=user_dict)
-        db_post = Post.model_validate({"posted_by": db_user.id, "caption": "search"})
-        create_value_using_session(session=session, value=db_post)
-        with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
-            media = [
-                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
-                UploadFile(f, filename="spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg"),
-            ]
-            for i, file in enumerate(media):
-                get_file_extension = str(file.filename).split(".")[-1]
-                # create object_key and upload media
-                object_key = (
-                    f"posts/{db_user.id}/{db_post.id}/post_{i}.{get_file_extension}"
+def before_create_post_with_different_timestamp(before_create_post):
+    def create_post(
+        session: Session,
+        user_dict: dict,
+        created_at: Optional[datetime] = datetime.now(tz=get_default_timezone()) - relativedelta(months=1),
+    ) -> Post:
+        print(f"before: {created_at}")
+        db_post = before_create_post(
+            session=session, user_dict=user_dict, created_at=created_at
+        )
+        print(f"after: {db_post.created_at}")
+        return db_post
+
+    return create_post
+
+
+@pytest.fixture(scope="function")
+def before_create_posts_with_multiple_timestamps(
+    before_create_post, before_create_post_with_different_timestamp
+):
+    def create_posts(session: Session, user_dict: dict) -> None:
+        for i in range(10):
+            if i < 2:
+                before_create_post(session=session, user_dict=user_dict)
+            elif i >= 2 and i < 4:
+                # 1 month before
+                before_create_post_with_different_timestamp(
+                    session=session, user_dict=user_dict
                 )
-                boto3_service = Boto3Service()
-                boto3_service.upload_file_from_memory(
-                    object_key=object_key,
-                    file_content=file.file,
-                    file_type="image/jpeg",
+            elif i >= 4 and i < 6:
+                # 6 months before
+                # print(datetime.now(tz=get_default_timezone()) - relativedelta(days=1, months=6))
+                before_create_post_with_different_timestamp(
+                    session=session,
+                    user_dict=user_dict,
+                    created_at=datetime.now(tz=get_default_timezone()) - relativedelta(days=1, months=6),
                 )
-                db_media = Media.model_validate(
-                    {
-                        "post_id": db_post.id,
-                        "media_url": object_key,
-                        "media_type": "image/jpeg",
-                    }
+            elif i >= 6 and i < 8:
+                # 1 year before
+                # print(datetime.now(tz=get_default_timezone()) - relativedelta(days=1, years=1))
+                before_create_post_with_different_timestamp(
+                    session=session,
+                    user_dict=user_dict,
+                    created_at=datetime.now(tz=get_default_timezone()) - relativedelta(days=1, years=1),
                 )
-                # save urls and types to media
-                create_value_using_session(session=session, value=db_media)
+            else:
+                # print(datetime.now(tz=get_default_timezone()) - relativedelta(days=1, years=10))
+                # 10 years before
+                before_create_post_with_different_timestamp(
+                    session=session,
+                    user_dict=user_dict,
+                    created_at=datetime.now(tz=get_default_timezone()) - relativedelta(days=1, years=10),
+                )
+        return None
+
+    return create_posts
+
+
+@pytest.fixture(scope="function")
+def before_create_post_caption_search(before_create_post):
+    def create_post(
+        session: Session, user_dict: dict, caption: Optional[str] = "search"
+    ) -> Post:
+        db_post = before_create_post(
+            session=session, user_dict=user_dict, caption=caption
+        )
         return db_post
 
     return create_post
@@ -380,7 +324,7 @@ def before_create_post_caption_search(before_create_normal_user):
 def before_create_follow_request():
     def create_follow_request(
         session: Session, follower_id: uuid.UUID, following_id: uuid.UUID
-    ):
+    ) -> FollowersModel:
         db_following = session.get(User, following_id)
         db_follow = FollowersModel.model_validate(
             {
@@ -401,7 +345,7 @@ def before_create_follow_request():
 def before_create_approved_follow_requests(before_create_normal_user):
     def create_follow_request(
         session: Session, follower_id: uuid.UUID, following_id: uuid.UUID
-    ):
+    ) -> FollowersModel:
         db_follow = FollowersModel.model_validate(
             {
                 "follower_id": follower_id,
@@ -435,7 +379,7 @@ def before_create_approved_follow_requests(before_create_normal_user):
 @pytest.fixture(scope="function")
 def before_create_private_user_with_followers(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> str:
     def create_private_user_with_followers(session: Session):
         user = before_create_normal_user(
             session=session, user_dict=create_private_user()
@@ -455,7 +399,7 @@ def before_create_private_user_with_followers(
 @pytest.fixture(scope="function")
 def before_create_public_user_with_followers(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> str:
     def create_public_user_with_followers(session: Session):
         user = before_create_normal_user(
             session=session, user_dict=create_public_user()
@@ -475,7 +419,7 @@ def before_create_public_user_with_followers(
 @pytest.fixture(scope="function")
 def before_create_private_user_with_following(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> str:
     def create_private_user_with_following(session: Session):
         user = before_create_normal_user(
             session=session, user_dict=create_private_user()
@@ -495,7 +439,7 @@ def before_create_private_user_with_following(
 @pytest.fixture(scope="function")
 def before_create_public_user_with_following(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> str:
     def create_public_user_with_following(session: Session):
         user = before_create_normal_user(
             session=session, user_dict=create_public_user()
@@ -515,7 +459,7 @@ def before_create_public_user_with_following(
 @pytest.fixture(scope="function")
 def before_create_follow(
     before_create_normal_user, before_create_approved_follow_requests
-):
+) -> FollowersModel:
     def create_follow(session: Session):
         user1 = before_create_normal_user(
             session=session, user_dict=create_private_user()
@@ -533,7 +477,7 @@ def before_create_follow(
 
 @pytest.fixture(scope="function")
 def before_report_post(before_create_normal_user, before_create_post):
-    def report_post(session: Session, posted_by: dict, reported_by: dict):
+    def report_post(session: Session, posted_by: dict, reported_by: dict) -> ReportPost:
         post = before_create_post(session=session, user_dict=posted_by)
         user = session.scalars(
             select(User).where(User.username == reported_by["username"])
@@ -550,4 +494,47 @@ def before_report_post(before_create_normal_user, before_create_post):
         )
         create_value_using_session(session=session, value=db_report)
         return db_report
+
     return report_post
+
+
+@pytest.fixture(scope="function")
+def before_like_post(before_create_normal_user, before_create_post):
+    def like_post(session: Session, posted_by: dict, liked_by: dict) -> Likes:
+        post = before_create_post(session=session, user_dict=posted_by)
+        user = session.scalars(
+            select(User).where(User.username == liked_by["username"])
+        ).first()
+        if not user:
+            user = before_create_normal_user(session=session, user_dict=liked_by)
+        db_like = Likes.model_validate(
+            {
+                "liked_by": user.id,
+                "post_id": post.id,
+            }
+        )
+        create_value_using_session(session=session, value=db_like)
+        return db_like
+
+    return like_post
+
+
+@pytest.fixture(scope="function")
+def before_create_subscription():
+    def create_subscription(session: Session, user: User) -> Subscription:
+        db_transaction = Transaction.model_validate(
+            {
+                "payment_id": "cs_payment_id",
+                "user_id": user.id,
+                "amount": 50,
+                "status": TransactionStatus.COMPLETED.value,
+            }
+        )
+        create_value_using_session(session=session, value=db_transaction)
+        db_subscription = Subscription.model_validate(
+            {"transaction_id": db_transaction.id, "user_id": user.id}
+        )
+        create_value_using_session(session=session, value=db_subscription)
+        return db_subscription
+
+    return create_subscription

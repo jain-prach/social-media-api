@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 from typing import Optional
 
 from sqlmodel import Session, select
@@ -24,14 +23,14 @@ class SubscriptionService:
             select(Subscription).where(Subscription.user_id == user_id)
         ).first()
 
-    def get_subscription_by_user_id_with_access_time(self, user_id: uuid.UUID
-    ) -> Optional[Subscription]:
-        """get subscription by user_id for access time that is left"""
-        return self.db_session.scalars(
-            select(Subscription)
-            .where(Subscription.access_time >= datetime.now())
-            .where(Subscription.user_id == user_id)
-        ).first()
+    # def get_subscription_by_user_id_with_access_time(self, user_id: uuid.UUID
+    # ) -> Optional[Subscription]:
+    #     """get subscription by user_id for access time that is left"""
+    #     return self.db_session.scalars(
+    #         select(Subscription)
+    #         .where(Subscription.access_time >= datetime.now(tz=get_default_timezone()))
+    #         .where(Subscription.user_id == user_id)
+    #     ).first()
     
     def create(self, subscription:SubscriptionSchema) -> Subscription:
         """create subscription instance in the database"""

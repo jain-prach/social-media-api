@@ -128,3 +128,4 @@ def create_ad(
     )
     db_post = post_app_service.get_post_by_id(id=post_id)
     return dict(data=db_post)
+    
