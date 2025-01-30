@@ -21,7 +21,7 @@ from src.tests.test_data import (
 from src.tests.test_utils import create_session
 from lib.fastapi.custom_enums import Role
 from src.application.users.services import JWTService
-from lib.fastapi.utils import generate_otp
+from lib.fastapi.utils import generate_otp, get_default_timezone
 from src.setup.config.settings import settings
 from src.tests.test_fixtures import (
     before_create_base_user,
@@ -206,7 +206,7 @@ def test_reset_password_invalid_token(before_create_otp):
         payload={
             "id": str(otp.base_user.id),
             "otp": otp.otp,
-            "exp": datetime.now() + timedelta(**settings.OTP_EXPIRE_TIME),
+            "exp": datetime.now(tz=get_default_timezone()) + timedelta(**settings.OTP_EXPIRE_TIME),
         },
         key="secret",
         algorithm="HS256",
@@ -224,7 +224,7 @@ def test_reset_password_invalid_token_payload(before_create_otp):
     otp = before_create_otp(session)
     otp_token = JWTService().create_access_token(
         data={"otp": otp.otp},
-        expire=datetime.now() + timedelta(**settings.OTP_EXPIRE_TIME),
+        expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.OTP_EXPIRE_TIME),
     )
     response = client.post(
         url="/reset-password/",

@@ -15,6 +15,8 @@ from src.interface.posts.reported_posts.router import router as report_post_rout
 from src.interface.payments.subscription.router import router as subscription_router
 from lib.fastapi.custom_middlewares import HandleExceptionMiddleware
 from lib.fastapi.utils import get_pydantic_error_response
+from src.setup.config.logs import get_logger
+logger = get_logger(__name__)
 
 disable_installed_extensions_check()
 
@@ -22,6 +24,7 @@ app = FastAPI()
 
 
 def pydantic_exception_handler(request: Request, exc: RequestValidationError):
+    logger.error(exc)
     return get_pydantic_error_response(e=exc)
 
 
@@ -43,6 +46,7 @@ app.include_router(subscription_router)
 
 
 def custom_openapi():
+    """customizing schema"""
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(

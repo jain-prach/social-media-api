@@ -28,7 +28,7 @@ class SubscriptionService:
     #     """get subscription by user_id for access time that is left"""
     #     return self.db_session.scalars(
     #         select(Subscription)
-    #         .where(Subscription.access_time >= datetime.now())
+    #         .where(Subscription.access_time >= datetime.now(tz=get_default_timezone()))
     #         .where(Subscription.user_id == user_id)
     #     ).first()
     

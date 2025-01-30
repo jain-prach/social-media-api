@@ -74,7 +74,11 @@ def get_admin_not_created() -> str:
 
 
 def get_admin_to_not_create_user() -> str:
-    return "Admin user can't create a user"
+    return "Base user with admin role can't create a user"
+
+
+def get_user_to_not_create_admin() -> str:
+    return "Base user with user role can't create admin"
 
 
 def get_admin_not_allowed() -> str:

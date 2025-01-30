@@ -138,7 +138,7 @@ class BaseUserAppService:
         """create jwt token with base user id and role in payload"""
         return JWTService().create_access_token(
             data={"id": id, "role": role.value},
-            expire=datetime.now() + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
+            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
         )
 
     def delete_base_user(self, id: uuid.UUID) -> None:
@@ -189,7 +189,7 @@ class BaseUserAppService:
         """create jwt token with otp and base_user_id in payload"""
         return JWTService().create_access_token(
             data={"id": base_user_id, "otp": otp},
-            expire=datetime.now() + timedelta(**settings.OTP_EXPIRE_TIME),
+            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.OTP_EXPIRE_TIME),
         )
 
     def verify_otp(self, otp: int, email: str) -> str:
@@ -218,7 +218,7 @@ class BaseUserAppService:
         payload = JWTService().decode(token=otp_token)
         if not payload.get("id") or not payload.get("otp") or not payload.get("exp"):
             raise BadRequestException(get_invalid_otp_token())
-        if datetime.fromtimestamp(payload.get("exp")) < datetime.now():
+        if datetime.fromtimestamp(payload.get("exp")) < datetime.now(tz=get_default_timezone()):
             raise NotFoundException(get_otp_link_expired())
         base_user_id = payload.get("id")
         user = self.get_base_user_by_id(id=base_user_id)

@@ -25,7 +25,7 @@ class AdminService:
         db_session_value_create(session=self.db_session, value=db_admin)
         return db_admin
 
-    def delete(self, admin: Admin) -> None:
+    def delete(self, db_admin: Admin) -> None:
         """delete admin from the database"""
-        self.db_session.delete(admin)
+        self.db_session.delete(db_admin)
         self.db_session.commit()
