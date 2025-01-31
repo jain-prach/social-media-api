@@ -55,6 +55,23 @@ def test_comment_post_without_comment(before_create_private_user_login_cred):
     session.close()
 
 
+def test_comment_post_with_whitespaces_comment(before_create_private_user_login_cred, before_create_post):
+    session = create_session()
+    token = before_create_private_user_login_cred(session=session)
+    post = before_create_post(session=session, user_dict=create_public_user())
+    comment = "       commenting on post              "
+    response = client.post(
+        f"/comment/{post.id}",
+        headers=get_auth_header(token=token),
+        json={"comment": comment}
+    )
+    assert response.status_code == 200
+    session.refresh(post)
+    assert len(post.comments) == 1
+    assert post.comments[0].comment == comment.strip()
+    session.close()
+
+
 def test_comment_post_by_admin(before_admin_login_cred):
     session = create_session()
     token = before_admin_login_cred(session=session)

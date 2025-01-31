@@ -18,7 +18,7 @@ class BaseUser(BaseModel, table=True):
     """
 
     email: str = Field(index=True, unique=True, nullable=False)
-    password: Optional[str] = Field(default=None, min_length=53, max_length=60)
+    password: Optional[str] = Field(default=None)
     role: Role = Field(default=Role.USER, sa_column=Column(Enum(Role)))
     is_active: Optional[bool] = Field(default=True, nullable=False)
     admin: Optional["Admin"] = Relationship(

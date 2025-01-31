@@ -10,6 +10,9 @@ from starlette.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_409_CONFLICT,
 )
+from fastapi import Request, Response
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 
 
 class CustomException(Exception):
@@ -70,3 +73,22 @@ class CustomUniqueConstraintError(CustomException):
     def __init__(self, detail: Optional[str] = None) -> None:
         status_code = HTTP_409_CONFLICT
         super().__init__(status_code, detail)
+
+
+def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Response:
+    """
+    Build a simple JSON response that includes the details of the rate limit
+    that was hit. If no limit is hit, the countdown is added to headers.
+    """
+    response = JSONResponse(
+        status_code=429,
+        content = {
+            "message": f"Rate limit exceeded: {exc.detail}",
+            "success": False,
+            "data": {"message": "Rate limit exceeded"},
+        },
+    )
+    response = request.app.state.limiter._inject_headers(
+        response, request.state.view_rate_limit
+    )
+    return response

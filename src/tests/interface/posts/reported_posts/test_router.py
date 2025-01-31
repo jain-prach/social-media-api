@@ -33,6 +33,43 @@ def test_report_post(before_create_private_user_login_cred, before_create_post):
     assert len(post.report) == 1
     session.close()
 
+def test_report_post_without_additional_text(before_create_private_user_login_cred, before_create_post):
+    session = create_session()
+    token = before_create_private_user_login_cred(session=session)
+    post = before_create_post(session=session, user_dict=create_public_user())
+    response = client.post(
+        f"/report-post/{post.id}/",
+        json={
+            "reason": ReportReason.COPYRIGHT.value,
+            "additional_text": ""
+        },
+        headers=get_auth_header(token=token),
+    )
+    print(response.json())
+    assert response.status_code == 200
+    session.refresh(post)
+    assert len(post.report) == 1
+    session.close()
+
+def test_report_post_with_whitespaces_additional_text(before_create_private_user_login_cred, before_create_post):
+    session = create_session()
+    token = before_create_private_user_login_cred(session=session)
+    post = before_create_post(session=session, user_dict=create_public_user())
+    additional_text = "             additional text        "
+    response = client.post(
+        f"/report-post/{post.id}/",
+        json={
+            "reason": ReportReason.HARASSMENT.value,
+            "additional_text": additional_text,
+        },
+        headers=get_auth_header(token=token),
+    )
+    assert response.status_code == 200
+    session.refresh(post)
+    assert len(post.report) == 1
+    assert post.report[0].additional_text == additional_text.strip()
+    session.close()
+
 
 def test_report_post_already_reported_by_user(
     before_create_private_user_login_cred, before_report_post

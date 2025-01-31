@@ -1,8 +1,8 @@
 import uuid
 import re
-from typing import Optional, List
+from typing import Optional, List, Annotated
 
-from pydantic import BaseModel, field_validator, field_serializer
+from pydantic import BaseModel, field_validator, field_serializer, StringConstraints
 
 from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
 from lib.fastapi.custom_enums import ProfileType
@@ -11,12 +11,10 @@ from src.setup.config.settings import settings
 from src.infrastructure.file_upload.services import Boto3Service
 
 
-class UserSchema(BaseModel):
-    """user schema"""
+class UsernameSchema(BaseModel):
+    """username schema with validation"""
 
     username: str
-    bio: str
-    profile_type: ProfileType
 
     @field_validator("username", mode="after")
     @classmethod
@@ -24,6 +22,15 @@ class UserSchema(BaseModel):
         if not re.match(settings.VALID_USERNAME_PATTERN, username):
             raise ValueError(get_username_value_error())
         return username
+
+
+class UserSchema(UsernameSchema):
+    """user schema"""
+
+    # bio: constr(strip_whitespace=True, max_length=80)
+    bio: Annotated[str, StringConstraints(strip_whitespace=True, max_length=80)]
+    profile_type: ProfileType
+
 
 class UserWithBaseUserId(UserSchema):
     """user schema with base user id to create relation to base user"""
@@ -42,7 +49,7 @@ class UserResponse(UserSchema):
 
     profile: Optional[str]
 
-    @field_serializer('profile')
+    @field_serializer("profile")
     def serialize_profile(self, profile: str):
         if profile:
             boto3_service = Boto3Service()
@@ -63,10 +70,10 @@ class UserListResponseData(BaseResponseSchema):
     data: List[UserResponse]
 
 
-class GetUser(BaseModel):
+class GetUser(UsernameSchema):
     """information required to get user"""
 
-    username: str
+    pass
 
 
 class DeleteUserResponseData(BaseResponseNoDataSchema):

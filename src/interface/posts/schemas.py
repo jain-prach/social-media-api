@@ -1,7 +1,7 @@
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints
 from fastapi_pagination import Page
 
 from src.interface.posts.media.schemas import MediaSchema
@@ -18,7 +18,9 @@ class PostSchema(BaseModel):
     """post schema with user.id that created post"""
 
     posted_by: uuid.UUID
-    caption: Optional[str]
+    caption: Annotated[
+        Optional[str], StringConstraints(strip_whitespace=True, max_length=300)
+    ] = None
 
 
 # class UpdatePostSchema(BaseModel):
@@ -39,10 +41,12 @@ class PostResponseData(BaseResponseSchema):
 
     data: PostResponse
 
+
 class PostDeleteResponseData(BaseResponseNoDataSchema):
     """post delete response data with message attribute set to optional static string"""
 
     message: Optional[str] = "Post Deleted!"
+
 
 class PostListResponseData(BaseResponseSchema):
     """post list response data with data attribute to include List of PostResponse"""
