@@ -20,7 +20,7 @@ from src.domain.models import (
     Subscription,
     Transaction,
     Likes,
-    Comments
+    Comments,
 )
 from .test_data import (
     create_user,
@@ -69,9 +69,8 @@ def before_create_otp(before_create_base_user):
 def before_create_otp_token(before_create_otp):
     def create_otp_token(session: Session) -> str:
         otp = before_create_otp(session=session)
-        otp_token = JWTService().create_access_token(
+        otp_token = JWTService().create_otp_token(
             data={"id": str(otp.base_user.id), "otp": otp.otp},
-            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.OTP_EXPIRE_TIME),
         )
         return otp_token
 
@@ -101,7 +100,6 @@ def before_admin_login_cred(before_create_base_user):
         create_value_using_session(session=session, value=db_admin)
         login_token = JWTService().create_access_token(
             data={"id": str(db_base_user.id), "role": db_base_user.role.value},
-            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
         )
         return login_token
 
@@ -127,7 +125,6 @@ def before_user_login_cred(before_create_base_user):
         db_base_user = before_create_base_user(session=session, user_dict=create_user())
         login_token = JWTService().create_access_token(
             data={"id": str(db_base_user.id), "role": db_base_user.role.value},
-            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
         )
         return login_token
 
@@ -167,7 +164,6 @@ def before_create_public_user_login_cred(before_create_normal_user):
                 "id": str(db_user.base_user.id),
                 "role": db_user.base_user.role.value,
             },
-            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
         )
         return login_token
 
@@ -185,7 +181,6 @@ def before_create_private_user_login_cred(before_create_normal_user):
                 "id": str(db_user.base_user.id),
                 "role": db_user.base_user.role.value,
             },
-            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
         )
         return login_token
 
@@ -210,7 +205,8 @@ def before_create_post(before_create_normal_user):
                 {
                     "posted_by": db_user.id,
                     "caption": "caption text",
-                    "created_at": datetime.now(tz=get_default_timezone()) - relativedelta(months=1),
+                    "created_at": datetime.now(tz=get_default_timezone())
+                    - relativedelta(months=1),
                 }
             )
         else:
@@ -253,7 +249,8 @@ def before_create_post_with_different_timestamp(before_create_post):
     def create_post(
         session: Session,
         user_dict: dict,
-        created_at: Optional[datetime] = datetime.now(tz=get_default_timezone()) - relativedelta(months=1),
+        created_at: Optional[datetime] = datetime.now(tz=get_default_timezone())
+        - relativedelta(months=1),
     ) -> Post:
         print(f"before: {created_at}")
         db_post = before_create_post(
@@ -284,7 +281,8 @@ def before_create_posts_with_multiple_timestamps(
                 before_create_post_with_different_timestamp(
                     session=session,
                     user_dict=user_dict,
-                    created_at=datetime.now(tz=get_default_timezone()) - relativedelta(days=1, months=6),
+                    created_at=datetime.now(tz=get_default_timezone())
+                    - relativedelta(days=1, months=6),
                 )
             elif i >= 6 and i < 8:
                 # 1 year before
@@ -292,7 +290,8 @@ def before_create_posts_with_multiple_timestamps(
                 before_create_post_with_different_timestamp(
                     session=session,
                     user_dict=user_dict,
-                    created_at=datetime.now(tz=get_default_timezone()) - relativedelta(days=1, years=1),
+                    created_at=datetime.now(tz=get_default_timezone())
+                    - relativedelta(days=1, years=1),
                 )
             else:
                 # print(datetime.now(tz=get_default_timezone()) - relativedelta(days=1, years=10))
@@ -300,7 +299,8 @@ def before_create_posts_with_multiple_timestamps(
                 before_create_post_with_different_timestamp(
                     session=session,
                     user_dict=user_dict,
-                    created_at=datetime.now(tz=get_default_timezone()) - relativedelta(days=1, years=10),
+                    created_at=datetime.now(tz=get_default_timezone())
+                    - relativedelta(days=1, years=10),
                 )
         return None
 

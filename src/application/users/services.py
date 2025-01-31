@@ -3,6 +3,7 @@ from typing import Optional, Sequence
 from datetime import datetime, timedelta
 
 from passlib.context import CryptContext
+# from cryptography.hazmat.primitives import hashes
 
 from sqlmodel import Session
 
@@ -16,7 +17,11 @@ from src.interface.users.schemas import (
 from src.infrastructure.email_service.services import SendgridService
 from src.infrastructure.auth_service.services import JWTService
 from src.infrastructure.oauth_service.services import GithubOauthService
-from lib.fastapi.custom_exceptions import UnauthorizedException, NotFoundException, BadRequestException
+from lib.fastapi.custom_exceptions import (
+    UnauthorizedException,
+    NotFoundException,
+    BadRequestException,
+)
 from lib.fastapi.error_string import (
     get_user_not_found,
     get_incorrect_password,
@@ -24,7 +29,7 @@ from lib.fastapi.error_string import (
     get_expired_otp,
     get_git_email_not_found,
     get_otp_link_expired,
-    get_invalid_otp_token
+    get_invalid_otp_token,
 )
 from lib.fastapi.custom_enums import Role, Environment
 from src.setup.config.settings import settings
@@ -44,6 +49,7 @@ class PasswordService:
 
     def __init__(self) -> None:
         self.PASSWORD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        # self.PASSWORD_CONTEXT = hashes.hash(hashes.SHA256())
 
     def get_hashed_password(self, password: str) -> str:
         """create hashed password for the password string received by user"""
@@ -88,7 +94,7 @@ class BaseUserAppService:
     def get_base_user_by_id(self, id: uuid.UUID) -> Optional[BaseUser]:
         """get base user by id"""
         return self.base_user_service.get_base_user_by_id(id=id)
-    
+
     def get_base_user_by_user_id(self, user_id: uuid.UUID) -> Optional[BaseUser]:
         """get base user by user id"""
         return self.base_user_service.get_base_user_by_user_id(user_id=user_id)
@@ -103,10 +109,14 @@ class BaseUserAppService:
         db_base_user = self.base_user_service.create(base_user=base_user)
         if db_base_user.role == Role.ADMIN:
             admin_app_service = AdminAppService(session=self.db_session)
-            db_base_user.admin = admin_app_service.create_admin_directly(base_user_id=db_base_user.id)
+            db_base_user.admin = admin_app_service.create_admin_directly(
+                base_user_id=db_base_user.id
+            )
         else:
             user_app_service = UserAppService(session=self.db_session)
-            db_base_user.user = user_app_service.create_dummy_user(base_user_id=db_base_user.id)
+            db_base_user.user = user_app_service.create_dummy_user(
+                base_user_id=db_base_user.id
+            )
         return self.update_base_user(base_user=db_base_user)
 
     def create_base_user_without_password(self, email: str) -> BaseUser:
@@ -122,6 +132,13 @@ class BaseUserAppService:
             base_user=base_user, db_base_user=db_base_user
         )
 
+    def create_jwt_token_for_user(self, id: str, role: Role) -> str:
+        """create jwt token with base user id and role in payload"""
+        data = {"id": str(id), "role": role.value}
+        access_token = JWTService().create_access_token(data=data)
+        refresh_token = JWTService().create_refresh_token(data=data)
+        return access_token, refresh_token
+
     def authenticate_user(self, user: Login) -> Optional[BaseUser]:
         """authenticate user for email and password"""
         db_user = self.get_base_user_by_email(email=user.email)
@@ -132,14 +149,18 @@ class BaseUserAppService:
         )
         if not verify:
             raise UnauthorizedException(get_incorrect_password())
-        return db_user
-
-    def create_jwt_token_for_user(self, id: str, role: Role) -> str:
-        """create jwt token with base user id and role in payload"""
-        return JWTService().create_access_token(
-            data={"id": id, "role": role.value},
-            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.ACCESS_TOKEN_LIFETIME),
+        access_token, refresh_token = self.create_jwt_token_for_user(id=db_user.id, role=db_user.role)
+        return dict(
+            id=db_user.id,
+            email=db_user.email,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
         )
+    
+    def get_access_token_from_refresh(self, token:str) -> str:
+        access_token = JWTService().generate_access_token_from_refresh_token(token=token)
+        return access_token
 
     def delete_base_user(self, id: uuid.UUID) -> None:
         db_base_user = self.get_base_user_by_id(id=id)
@@ -151,8 +172,8 @@ class BaseUserAppService:
     def create_otp(self, user_id: uuid.UUID) -> Otp:
         """create otp for user"""
         return OtpService(session=self.db_session).create(base_user_id=user_id)
-    
-    def delete_otp(self, user:BaseUser) -> None:
+
+    def delete_otp(self, user: BaseUser) -> None:
         """delete otp created for user"""
         otp_obj = user.otp
         if otp_obj:
@@ -187,9 +208,8 @@ class BaseUserAppService:
 
     def create_jwt_token_for_otp(self, otp: int, base_user_id: uuid.UUID) -> str:
         """create jwt token with otp and base_user_id in payload"""
-        return JWTService().create_access_token(
+        return JWTService().create_otp_token(
             data={"id": base_user_id, "otp": otp},
-            expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.OTP_EXPIRE_TIME),
         )
 
     def verify_otp(self, otp: int, email: str) -> str:
@@ -218,7 +238,9 @@ class BaseUserAppService:
         payload = JWTService().decode(token=otp_token)
         if not payload.get("id") or not payload.get("otp") or not payload.get("exp"):
             raise BadRequestException(get_invalid_otp_token())
-        if datetime.fromtimestamp(payload.get("exp")) < datetime.now(tz=get_default_timezone()):
+        if datetime.fromtimestamp(
+            payload.get("exp"), tz=get_default_timezone()
+        ) < datetime.now(tz=get_default_timezone()):
             raise NotFoundException(get_otp_link_expired())
         base_user_id = payload.get("id")
         user = self.get_base_user_by_id(id=base_user_id)

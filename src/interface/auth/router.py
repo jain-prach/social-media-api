@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from starlette.status import HTTP_201_CREATED, HTTP_200_OK
 
 from src.setup.config.database import SessionDep
@@ -13,9 +13,11 @@ from .schemas import (
     ResetPassword,
     ResetPasswordResponseData,
     GitAuthenticateResponseData,
+    AccessTokenResponseData,
 )
 from ..users.schemas import CreateBaseUser, BaseUserResponseData
 from lib.fastapi.custom_routes import UniqueConstraintErrorRoute
+from src.setup.config.limiter import limiter
 
 router = APIRouter(tags=["auth"], route_class=UniqueConstraintErrorRoute)
 
@@ -25,7 +27,8 @@ router = APIRouter(tags=["auth"], route_class=UniqueConstraintErrorRoute)
     status_code=HTTP_201_CREATED,
     response_model=BaseUserResponseData,
 )
-def register(user: CreateBaseUser, session: SessionDep):
+@limiter.limit("10/minute", override_defaults=True)
+def register(request: Request, user: CreateBaseUser, session: SessionDep):
     """create base user for site access"""
     db_user = BaseUserAppService(session).create_base_user(user)
     return {
@@ -39,18 +42,18 @@ def register(user: CreateBaseUser, session: SessionDep):
 def login(user: Login, session: SessionDep):
     """login using base user credentials, use response access_token to login from HTTPBearer"""
     base_user_app_service = BaseUserAppService(session)
-    db_user = base_user_app_service.authenticate_user(user)
-    access_token = base_user_app_service.create_jwt_token_for_user(
-        id=str(db_user.id), role=db_user.role
+    response = base_user_app_service.authenticate_user(user)
+    return {"data": response}
+
+
+@router.post("/refresh/", status_code=HTTP_200_OK, response_model=AccessTokenResponseData)
+def get_access_token_from_refresh_token(refresh_token: str, session: SessionDep):
+    """get access token from refresh token"""
+    base_user_app_service = BaseUserAppService(session)
+    access_token = base_user_app_service.get_access_token_from_refresh(
+        token=refresh_token
     )
-    return {
-        "data": dict(
-            id=db_user.id,
-            email=db_user.email,
-            access_token=access_token,
-            token_type="bearer",
-        )
-    }
+    return {"data": {"access_token": access_token, "token_type": "bearer"}}
 
 
 @router.post(
