@@ -205,6 +205,27 @@ def test_create_post_without_caption(before_create_public_user_login_cred):
     assert len(data["media"]) == 2
     db_post = session.get(Post, data["id"])
     assert db_post is not None
+    assert db_post.caption is None
+    session.close()
+
+
+def test_create_post_with_whitespaces_caption(before_create_public_user_login_cred):
+    session = create_session()
+    token = before_create_public_user_login_cred(session=session)
+    caption = "        caption for post          "
+    with open("src/tests/test_files/spcode-0SXyYNDUt6b9WEPHQqqw4L.jpeg", "rb") as f:
+        response = client.post(
+            "post/",
+            headers=get_auth_header(token),
+            data={"caption": caption},
+            files=[("media", f), ("media", f)],
+        )
+    data = response.json()["data"]
+    assert response.status_code == 201
+    assert len(data["media"]) == 2
+    db_post = session.get(Post, data["id"])
+    assert db_post is not None
+    assert db_post.caption == caption.strip()
     session.close()
 
 

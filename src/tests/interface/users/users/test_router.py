@@ -107,6 +107,56 @@ def test_update_user_with_unauthorized_access():
     response = client.put("/user/")
     assert response.status_code == 401
 
+def test_update_user_with_invalid_username(before_create_public_user_login_cred):
+    session = create_session()
+    token = before_create_public_user_login_cred(session=session)
+    update_dict = {
+        "username": " invalid@ ",
+        "bio": "New bio",
+        "profile_type": ProfileType.PRIVATE.value,
+    }
+    response = client.put(
+        "/user/",
+        headers=get_auth_header(token),
+        data=update_dict,
+    )
+    assert response.status_code == 422
+    session.close()
+
+def test_update_user_with_invalid_username_max_length(before_create_public_user_login_cred):
+    session = create_session()
+    token = before_create_public_user_login_cred(session=session)
+    update_dict = {
+        "username": "Loremipsumdolorsitametconsecteturadipiscingelit",
+        "bio": "New bio",
+        "profile_type": ProfileType.PRIVATE.value,
+    }
+    response = client.put(
+        "/user/",
+        headers=get_auth_header(token),
+        data=update_dict,
+    )
+    assert response.status_code == 422
+    session.close()
+
+def test_update_user_with_whitespaces_in_bio(before_create_public_user_login_cred):
+    session = create_session()
+    token = before_create_public_user_login_cred(session=session)
+    update_dict = {
+        "username": get_username(),
+        "bio": "       New bio                ",
+        "profile_type": ProfileType.PRIVATE.value,
+    }
+    response = client.put(
+        "/user/",
+        headers=get_auth_header(token),
+        data=update_dict,
+    )
+    data = response.json()["data"]
+    assert response.status_code == 200
+    assert data["username"] == update_dict.get("username")
+    assert data["bio"] == update_dict.get("bio").strip()
+    session.close()
 
 def test_delete_user(before_create_public_user_login_cred):
     session = create_session()

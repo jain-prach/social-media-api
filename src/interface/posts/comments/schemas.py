@@ -1,7 +1,7 @@
 import uuid
-from typing import Optional
+from typing import Optional, Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints
 
 from lib.fastapi.custom_schemas import BaseResponseNoDataSchema, BaseResponseSchema
 
@@ -9,14 +9,13 @@ from lib.fastapi.custom_schemas import BaseResponseNoDataSchema, BaseResponseSch
 class CommentPostSchema(BaseModel):
     """schema to comment post"""
 
-    comment: str
+    comment: Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)]
 
 
-class CommentPost(BaseModel):
+class CommentPost(CommentPostSchema):
     """schema to create comment in database"""
 
     commented_by: uuid.UUID
-    comment: str
     post_id: uuid.UUID
 
 

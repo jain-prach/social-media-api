@@ -5,6 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator, HttpUrl
 
 from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
+from lib.fastapi.error_string import get_password_value_error
 
 from src.setup.config.settings import settings
 
@@ -22,6 +23,7 @@ class LoginResponse(BaseModel):
     id: uuid.UUID
     email: EmailStr
     access_token: str
+    refresh_token: str
     token_type: str
 
 
@@ -29,6 +31,19 @@ class LoginResponseData(BaseResponseSchema):
     """login response data with data attribute to include LoginResponse"""
 
     data: LoginResponse
+
+
+class AccessTokenResponse(BaseModel):
+    """get access token as response"""
+
+    access_token: str
+    token_type: str
+
+
+class AccessTokenResponseData(BaseResponseSchema):
+    """access token response data with data attribute to include AccessTokenResponse"""
+
+    data: AccessTokenResponse
 
 
 class ForgotPassword(BaseModel):
@@ -79,13 +94,7 @@ class ResetPassword(BaseModel):
     @classmethod
     def valid_password(cls, new_password: str) -> str:
         if not re.match(settings.STRONG_PASSWORD_PATTERN, new_password):
-            raise ValueError(
-                "Max length(8) and Password must contain at least "
-                "one lower character, "
-                "one upper character, "
-                "digit and "
-                "special symbol"
-            )
+            raise ValueError(get_password_value_error())
         return new_password
 
 
@@ -99,6 +108,7 @@ class GitAuthenticateResponse(BaseModel):
     """git authentication url response schema"""
 
     url: HttpUrl
+
 
 class GitAuthenticateResponseData(BaseResponseSchema):
     """git authentication response data with data attribute to include GitAuthenticateResponse"""

@@ -5,13 +5,13 @@ from pydantic import BaseModel
 
 from lib.fastapi.custom_enums import StatusType
 from lib.fastapi.custom_schemas import BaseResponseSchema, BaseResponseNoDataSchema
-from src.interface.users.users.schemas import UserResponse
+from src.interface.users.users.schemas import UserResponse, UsernameSchema
 
 
-class FollowRequestSchema(BaseModel):
+class FollowRequestSchema(UsernameSchema):
     """get user by username for follow request operations"""
 
-    username: str
+    pass
 
 
 class FollowRequestSentResponse(BaseModel):
@@ -48,6 +48,7 @@ class FollowRequestListSentResponseData(BaseResponseSchema):
 
     data: List[FollowRequestSentResponse]
 
+
 class FollowRequest(BaseModel):
     """schema for database to create follow request"""
 
@@ -55,25 +56,30 @@ class FollowRequest(BaseModel):
     following_id: uuid.UUID
     status: StatusType
 
+
 class FollowRequestAcceptedResponseData(BaseResponseNoDataSchema):
     """Follow Request Accepted Response data with message attribute set to optional static string"""
-    
+
     message: Optional[str] = "Request Accepted!!"
+
 
 class FollowRequestRejectedResponseData(BaseResponseNoDataSchema):
     """Follow Request Rejected Response data with message attribute set to optional static string"""
-    
+
     message: Optional[str] = "Request Rejected!!"
+
 
 class FollowRequestCancelledResponseData(BaseResponseNoDataSchema):
     """Follow Request Cancelled Response data with message attribute set to optional static string"""
-    
+
     message: Optional[str] = "Request Cancelled!!"
+
 
 class UnfollowResponseData(BaseResponseNoDataSchema):
     """Unfollow Response data with message attribute set to optional static string"""
 
     message: Optional[str] = "User Unfollowed!!"
+
 
 class RemoveFollowerResponseData(BaseResponseNoDataSchema):
     """Remove Follower Response data with message attribute set to optional static string"""

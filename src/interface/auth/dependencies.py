@@ -24,7 +24,9 @@ class CustomHTTPBearer(HTTPBearer):
         if not (authorization and scheme and credentials):
             if self.auto_error:
                 raise HTTPException(
-                    status_code=HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+                    status_code=HTTP_401_UNAUTHORIZED,
+                    detail="Not authenticated",
+                    headers={"WWW-Authenticate": "Bearer"},
                 )
             else:
                 return None
@@ -33,18 +35,25 @@ class CustomHTTPBearer(HTTPBearer):
                 raise HTTPException(
                     status_code=HTTP_401_UNAUTHORIZED,
                     detail="Invalid authentication credentials",
+                    headers={"WWW-Authenticate": "Bearer"},
                 )
             else:
                 return None
         token = HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
         payload = JWTService().decode(token.credentials)
         if not payload.get("id") or not payload.get("role") or not payload.get("exp"):
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
-        if datetime.fromtimestamp(payload.get("exp")) < datetime.now(tz=get_default_timezone()):
             raise HTTPException(
-                    status_code=HTTP_401_UNAUTHORIZED,
-                    detail=get_access_token_expired(),
-                )
+                status_code=HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if datetime.fromtimestamp(
+            payload.get("exp"), tz=get_default_timezone()
+        ) < datetime.now(tz=get_default_timezone()):
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED,
+                detail=get_access_token_expired(),
+            )
         return payload
 
 

@@ -1,5 +1,6 @@
 import os
 import ast
+from typing import List
 
 from dotenv import load_dotenv
 
@@ -18,6 +19,7 @@ class Config(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT")
     BASE_URL: str = os.getenv("BASE_URL")
     TIMEZONE: TimeZoneName = os.getenv("TIMEZONE")
+    ALLOWED_HOSTS: List = ["localhost", "127.0.0.1"]
 
     DB_ENGINE: str = os.getenv("DB_ENGINE")
     DB_NAME: str = os.getenv("DB_NAME")
@@ -39,7 +41,11 @@ class Config(BaseSettings):
 
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM")
+    JWT_REFRESH_SECRET: str = os.getenv("JWT_REFRESH_SECRET")
     ACCESS_TOKEN_LIFETIME: dict = ast.literal_eval(os.getenv("ACCESS_TOKEN_EXPIRATION"))
+    REFRESH_TOKEN_LIFETIME: dict = ast.literal_eval(os.getenv("REFRESH_TOKEN_EXPIRATION"))
+
+    STARLETTE_CSRF_SECRET: str = os.getenv("STARLETTE_CSRF_SECRET")
 
     SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY")
     FORGOT_PASSWORD_TEMPLATE: str = os.getenv("FORGOT_PASSWORD_TEMPLATE")

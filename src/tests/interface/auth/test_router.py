@@ -104,6 +104,7 @@ def test_login(before_create_base_user):
     user = before_create_base_user(session=session, user_dict=create_user())
     response = client.post(url="/login/", json=created_user(email=user.email))
     data = response.json()["data"]
+    # print(data)
     assert response.status_code == 200
     assert "access_token" in data.keys()
     payload = JWTService().decode(token=data["access_token"])
@@ -188,6 +189,7 @@ def test_reset_password(before_create_otp_token):
     session.close()
     assert response.status_code == 200
 
+
 def test_reset_password_with_weak_password(before_create_otp_token):
     session = create_session()
     otp_token = before_create_otp_token(session)
@@ -206,7 +208,8 @@ def test_reset_password_invalid_token(before_create_otp):
         payload={
             "id": str(otp.base_user.id),
             "otp": otp.otp,
-            "exp": datetime.now(tz=get_default_timezone()) + timedelta(**settings.OTP_EXPIRE_TIME),
+            "exp": datetime.now(tz=get_default_timezone())
+            + timedelta(**settings.OTP_EXPIRE_TIME),
         },
         key="secret",
         algorithm="HS256",
@@ -224,7 +227,6 @@ def test_reset_password_invalid_token_payload(before_create_otp):
     otp = before_create_otp(session)
     otp_token = JWTService().create_access_token(
         data={"otp": otp.otp},
-        expire=datetime.now(tz=get_default_timezone()) + timedelta(**settings.OTP_EXPIRE_TIME),
     )
     response = client.post(
         url="/reset-password/",
